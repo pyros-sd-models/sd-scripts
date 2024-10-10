@@ -107,8 +107,8 @@ def sample_images(
                     epoch,
                     steps,
                     sample_prompts_te_outputs,
-                    live,
-                    prompt_replacement,
+                    live=live,
+                    prompt_replacement=prompt_replacement,
                 )
     else:
         # Creating list with N elements, where each element is a list of prompt_dicts, and N is the number of processes available (number of devices available)
@@ -133,8 +133,8 @@ def sample_images(
                         epoch,
                         steps,
                         sample_prompts_te_outputs,
-                        live,
-                        prompt_replacement,
+                        live=live,
+                        prompt_replacement=prompt_replacement,
                     )
 
     torch.set_rng_state(rng_state)
