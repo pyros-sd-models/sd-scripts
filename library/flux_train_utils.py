@@ -107,6 +107,7 @@ def sample_images(
                     epoch,
                     steps,
                     sample_prompts_te_outputs,
+                    live,
                     prompt_replacement,
                 )
     else:
