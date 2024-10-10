@@ -133,8 +133,8 @@ def sample_images(
                         epoch,
                         steps,
                         sample_prompts_te_outputs,
-                        prompt_replacement,
                         live,
+                        prompt_replacement,
                     )
 
     torch.set_rng_state(rng_state)
@@ -155,8 +155,8 @@ def sample_image_inference(
     epoch,
     steps,
     sample_prompts_te_outputs,
-    prompt_replacement,
     live,
+    prompt_replacement,
 ):
     assert isinstance(prompt_dict, dict)
     # negative_prompt = prompt_dict.get("negative_prompt")
