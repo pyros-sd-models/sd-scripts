@@ -1570,9 +1570,6 @@ class NetworkTrainer:
                                     global_step,
                                     epoch,
                                 )
-                                live.log_artifact(
-                                    ckpt_name, type="model", name="pytorch-model"
-                                )
                                 if args.save_state:
                                     train_util.save_and_remove_state_stepwise(
                                         args, accelerator, global_step
