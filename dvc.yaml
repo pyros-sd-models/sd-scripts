@@ -1,0 +1,66 @@
+stages:
+  train:
+    cmd: >
+      accelerate launch
+      --mixed_precision ${PRECISION}
+      --num_cpu_threads_per_process 1
+      flux_train_network.py
+      --pretrained_model_name_or_path ${MODEL_PATH}/StableDiffusion/flux1-dev.safetensors
+      --clip_l ${MODEL_PATH}/VAE/clip_l.safetensors
+      --t5xxl ${MODEL_PATH}/VAE/t5xxl_fp16.safetensors
+      --ae ${MODEL_PATH}/VAE/ae.safetensors
+      --cache_latents_to_disk
+      --save_model_as safetensors
+      --sdpa
+      --persistent_data_loader_workers
+      --max_data_loader_n_workers 2
+      --seed 42
+      --cache_text_encoder_outputs
+      --cache_text_encoder_outputs_to_disk
+      --gradient_accumulation_steps 1
+      --gradient_checkpointing
+      --mixed_precision ${PRECISION}
+      --save_precision ${PRECISION}
+      --network_module networks.lora_flux
+      --fp8_base
+      --highvram
+      --timestep_sampling shift
+      --model_prediction_type raw
+      --discrete_flow_shift 3.1582
+      --guidance_scale 1.0
+      --optimizer_type=pyro-diffgrad
+      --learning_rate ${LEARNING_RATE}
+      --network_train_unet_only
+      --network_dim ${NETWORK_DIM}
+      --network_alpha ${NETWORK_DIM}
+      --max_train_steps ${MAX_STEPS}
+      --save_every_n_steps ${SAVE_STEPS}
+      --sample_every_n_steps ${SAMPLE_STEPS}
+      --sample_prompts ${OPTIMIZER_PATH}/prompts.toml
+      --dataset_config ${OPTIMIZER_PATH}/data.toml
+      --output_name exp_1
+      --log_with tensorboard
+      --logging_dir ${OPTIMIZER_PATH}/out/exp_1  --output_dir ${OPTIMIZER_PATH}/out/exp_1
+    deps:
+    - flux_train_network.py
+    - ${OPTIMIZER_PATH}/prompts.toml
+    - ${OPTIMIZER_PATH}/data.toml
+    - ${MODEL_PATH}/StableDiffusion/flux1-dev.safetensors
+    - ${MODEL_PATH}/VAE/clip_l.safetensors
+    - ${MODEL_PATH}/VAE/t5xxl_fp16.safetensors
+    - ${MODEL_PATH}/VAE/ae.safetensors
+    outs:
+    - ${OPTIMIZER_PATH}/out/exp_1
+    vars:
+    - MODEL_PATH: D:/Diffusion/Repos/StabilityMatrix/Data/Models
+    - OPTIMIZER_PATH: _experiments/optimizer
+    - PRECISION: bf16
+
+params:
+- params.yaml
+- dvclive/params.yaml
+metrics:
+- dvclive/metrics.json
+plots:
+- dvclive/plots/metrics:
+    x: step

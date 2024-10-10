@@ -28,6 +28,8 @@ from accelerate import (
     DistributedDataParallelKwargs,
     PartialState,
 )
+from dvclive import Live
+
 import glob
 import math
 import os
@@ -5180,24 +5182,7 @@ def get_optimizer(args, trainable_params):
             optimizer = optimizer_class(
                 trainable_params, lr=lr, nesterov=True, **optimizer_kwargs
             )
-        elif optimizer_type.lower().startswith("Pyro-".lower()):
-            try:
-                from pytorch_optimizer import load_optimizer, SafeFP16Optimizer
 
-                split_string = optimizer_type.split("-")
-                optimizer_name = split_string[1]
-                optimizer_class = load_optimizer(optimizer=optimizer_name)
-
-                logger.info(f"\n{'=' * 50}")
-                logger.info(f"🚀 Using PYRO's Optimizer Wrapper")
-                logger.info(f"🔧 Optimizer Name: {optimizer_name}")
-                logger.info(f"⚙️  Optimizer Config: lr={lr} {optimizer_kwargs}")
-                logger.info(f"{'=' * 50}\n")
-                optimizer = optimizer_class(trainable_params, lr=lr, **optimizer_kwargs)
-            except ImportError:
-                raise ImportError(
-                    "No pytorch_optimizer / pytorch_optimizerがインストールされていないようです"
-                )
         elif optimizer_type == "Lion8bit".lower():
             logger.info(f"use 8-bit Lion optimizer | {optimizer_kwargs}")
             try:
@@ -5225,6 +5210,33 @@ def get_optimizer(args, trainable_params):
 
         if optimizer_class is not None:
             optimizer = optimizer_class(trainable_params, lr=lr, **optimizer_kwargs)
+
+    elif optimizer_type.lower().startswith("Pyro-".lower()):
+        try:
+            from pytorch_optimizer import load_optimizer, SafeFP16Optimizer
+
+            split_string = optimizer_type.split("-")
+            optimizer_name = split_string[1]
+            optimizer_class = load_optimizer(optimizer=optimizer_name)
+
+            logger.info(f"\n{'=' * 50}")
+            logger.info(f"🚀 Using PYRO's Optimizer Wrapper")
+            logger.info(f"🔧 Optimizer Name: {optimizer_name}")
+            logger.info(f"⚙️  Optimizer Config: lr={lr} {optimizer_kwargs}")
+            logger.info(f"{'=' * 50}\n")
+            optimizer = optimizer_class(trainable_params, lr=lr, **optimizer_kwargs)
+        except ImportError:
+            raise ImportError(
+                "No pytorch_optimizer / pytorch_optimizerがインストールされていないようです"
+            )
+        except Exception as e:
+            logger.error(
+                "An error occurred while loading the optimizer:", exc_info=True
+            )
+            raise RuntimeError(
+                f"Failed to initialize optimizer '{optimizer_name}' with type '{optimizer_type}'. "
+                "Please check the optimizer name, configuration, and installation."
+            ) from e
 
     elif optimizer_type == "PagedAdamW".lower():
         logger.info(f"use PagedAdamW optimizer | {optimizer_kwargs}")
