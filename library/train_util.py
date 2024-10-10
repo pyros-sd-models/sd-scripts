@@ -6973,7 +6973,7 @@ def sample_images_common(
                         epoch,
                         steps,
                         prompt_replacement,
-                        live,
+                        live=live,
                         controlnet=controlnet,
                     )
 
