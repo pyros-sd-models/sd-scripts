@@ -6828,6 +6828,7 @@ def sample_images_common(
     tokenizer,
     text_encoder,
     unet,
+    live,
     prompt_replacement=None,
     controlnet=None,
 ):
@@ -6972,6 +6973,7 @@ def sample_images_common(
                         epoch,
                         steps,
                         prompt_replacement,
+                        live,
                         controlnet=controlnet,
                     )
 
@@ -6998,6 +7000,7 @@ def sample_image_inference(
     epoch,
     steps,
     prompt_replacement,
+    live,
     controlnet=None,
 ):
     assert isinstance(prompt_dict, dict)
@@ -7075,7 +7078,9 @@ def sample_image_inference(
     seed_suffix = "" if seed is None else f"_{seed}"
     i: int = prompt_dict["enum"]
     img_filename = f"{'' if args.output_name is None else args.output_name + '_'}{num_suffix}_{i:02d}_{ts_str}{seed_suffix}.png"
-    image.save(os.path.join(save_dir, img_filename))
+    # image.save(os.path.join(save_dir, img_filename))
+
+    live.log_image(os.path.join(save_dir, img_filename), image)
 
     # send images to wandb if enabled
     if "wandb" in [tracker.name for tracker in accelerator.trackers]:

@@ -212,6 +212,7 @@ class NetworkTrainer:
             tokenizers[0],
             text_encoder,
             unet,
+            live,
         )
 
     # region SD/SDXL
@@ -1309,12 +1310,8 @@ class NetworkTrainer:
                 tokenizers,
                 text_encoder,
                 unet,
+                live,
             )
-            save_dir = args.output_dir + "/sample"
-            for filename in os.listdir(save_dir):
-                if filename.endswith((".png", ".jpg", ".jpeg")):
-                    image_path = os.path.join(save_dir, filename)
-                    live.log_image(image_path)
             optimizer_train_fn()
             if len(accelerator.trackers) > 0:
                 # log empty object to commit the sample images to wandb
@@ -1554,12 +1551,8 @@ class NetworkTrainer:
                             tokenizers,
                             text_encoder,
                             unet,
+                            live,
                         )
-                        save_dir = args.output_dir + "/sample"
-                        for filename in os.listdir(save_dir):
-                            if filename.endswith((".png", ".jpg", ".jpeg")):
-                                image_path = os.path.join(save_dir, filename)
-                                live.log_image(image_path)
 
                         # 指定ステップごとにモデルを保存
                         if (
@@ -1696,12 +1689,9 @@ class NetworkTrainer:
                     tokenizers,
                     text_encoder,
                     unet,
+                    live,
                 )
-                save_dir = args.output_dir + "/sample"
-                for filename in os.listdir(save_dir):
-                    if filename.endswith((".png", ".jpg", ".jpeg")):
-                        image_path = os.path.join(save_dir, filename)
-                        live.log_image(image_path)
+
                 optimizer_train_fn()
 
                 # end of epoch

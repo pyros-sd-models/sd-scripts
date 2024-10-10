@@ -28,6 +28,7 @@ stages:
       --model_prediction_type raw
       --discrete_flow_shift 3.1582
       --guidance_scale 1.0
+      --sample_at_first
       --optimizer_type=pyro-diffgrad
       --learning_rate ${LEARNING_RATE}
       --network_train_unet_only
