@@ -1,3 +1,26 @@
+I implemented a wrapper for this list of optimizers:
+
+https://pytorch-optimizers.readthedocs.io/en/latest/optimizer/
+
+
+and to use it you just have to replace
+
+`--optimizer_type=adamw8bit `
+
+or whatever optimizer you currently use with
+
+`--optimizer_type=pyro-diffgrad`
+
+to use the diffgrad optimizer
+
+**NOTE - ATTENTION:** Not every optimizer will work with the architecture we are working with, so if some will print NaN as their loss just move on to the next optimizer
+
+
+--------------------------------------------------
+
+
+
+
 This repository contains training, generation and utility scripts for Stable Diffusion.
 
 ## FLUX.1 training (WIP)
