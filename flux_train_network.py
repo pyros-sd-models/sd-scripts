@@ -387,8 +387,8 @@ class FluxNetworkTrainer(train_network.NetworkTrainer):
                 flux,
                 ae,
                 text_encoders,
-                live,
-                self.sample_prompts_te_outputs,
+                live=live,
+                sample_prompts_te_outputs=self.sample_prompts_te_outputs,
             )
             return
 
@@ -446,8 +446,8 @@ class FluxNetworkTrainer(train_network.NetworkTrainer):
             wrapper,
             ae,
             text_encoders,
-            self.sample_prompts_te_outputs,
-            live,
+            live=live,
+            sample_prompts_te_outputs=self.sample_prompts_te_outputs,
         )
         clean_memory_on_device(accelerator.device)
 

@@ -39,8 +39,8 @@ def sample_images(
     flux,
     ae,
     text_encoders,
-    sample_prompts_te_outputs,
     live,
+    sample_prompts_te_outputs,
     prompt_replacement=None,
 ):
     if steps == 0:

@@ -63,5 +63,6 @@ params:
 plots:
 - dvclive/plots/metrics:
     x: step
+- dvclive/plots/images
 metrics:
 - dvclive/metrics.json
