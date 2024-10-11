@@ -51,13 +51,19 @@ def sample_images(
             if epoch is None or epoch % args.sample_every_n_epochs != 0:
                 return
         else:
-            if steps % args.sample_every_n_steps != 0 or epoch is not None:  # steps is not divisible or end of epoch
+            if (
+                steps % args.sample_every_n_steps != 0 or epoch is not None
+            ):  # steps is not divisible or end of epoch
                 return
 
     logger.info("")
-    logger.info(f"generating sample images at step / サンプル画像生成 ステップ: {steps}")
+    logger.info(
+        f"generating sample images at step / サンプル画像生成 ステップ: {steps}"
+    )
     if not os.path.isfile(args.sample_prompts) and sample_prompts_te_outputs is None:
-        logger.error(f"No prompt file / プロンプトファイルがありません: {args.sample_prompts}")
+        logger.error(
+            f"No prompt file / プロンプトファイルがありません: {args.sample_prompts}"
+        )
         return
 
     distributed_state = PartialState()  # for multi gpu distributed inference. this is a singleton, so it's safe to use it here
@@ -77,7 +83,9 @@ def sample_images(
     rng_state = torch.get_rng_state()
     cuda_rng_state = None
     try:
-        cuda_rng_state = torch.cuda.get_rng_state() if torch.cuda.is_available() else None
+        cuda_rng_state = (
+            torch.cuda.get_rng_state() if torch.cuda.is_available() else None
+        )
     except Exception:
         pass
 
@@ -106,7 +114,9 @@ def sample_images(
             per_process_prompts.append(prompts[i :: distributed_state.num_processes])
 
         with torch.no_grad():
-            with distributed_state.split_between_processes(per_process_prompts) as prompt_dict_lists:
+            with distributed_state.split_between_processes(
+                per_process_prompts
+            ) as prompt_dict_lists:
                 for prompt_dict in prompt_dict_lists[0]:
                     sample_image_inference(
                         accelerator,
@@ -193,7 +203,9 @@ def sample_image_inference(
         print(f"Encoding prompt: {prompt}")
         tokens_and_masks = tokenize_strategy.tokenize(prompt)
         # strategy has apply_t5_attn_mask option
-        encoded_text_encoder_conds = encoding_strategy.encode_tokens(tokenize_strategy, text_encoders, tokens_and_masks)
+        encoded_text_encoder_conds = encoding_strategy.encode_tokens(
+            tokenize_strategy, text_encoders, tokens_and_masks
+        )
 
         # if text_encoder_conds is not cached, use encoded_text_encoder_conds
         if len(text_encoder_conds) == 0:
@@ -216,14 +228,32 @@ def sample_image_inference(
         16 * 2 * 2,
         device=accelerator.device,
         dtype=weight_dtype,
-        generator=torch.Generator(device=accelerator.device).manual_seed(seed) if seed is not None else None,
+        generator=torch.Generator(device=accelerator.device).manual_seed(seed)
+        if seed is not None
+        else None,
     )
-    timesteps = get_schedule(sample_steps, noise.shape[1], shift=True)  # FLUX.1 dev -> shift=True
-    img_ids = flux_utils.prepare_img_ids(1, packed_latent_height, packed_latent_width).to(accelerator.device, weight_dtype)
-    t5_attn_mask = t5_attn_mask.to(accelerator.device) if args.apply_t5_attn_mask else None
+    timesteps = get_schedule(
+        sample_steps, noise.shape[1], shift=True
+    )  # FLUX.1 dev -> shift=True
+    img_ids = flux_utils.prepare_img_ids(
+        1, packed_latent_height, packed_latent_width
+    ).to(accelerator.device, weight_dtype)
+    t5_attn_mask = (
+        t5_attn_mask.to(accelerator.device) if args.apply_t5_attn_mask else None
+    )
 
     with accelerator.autocast(), torch.no_grad():
-        x = denoise(flux, noise, img_ids, t5_out, txt_ids, l_pooled, timesteps=timesteps, guidance=scale, t5_attn_mask=t5_attn_mask)
+        x = denoise(
+            flux,
+            noise,
+            img_ids,
+            t5_out,
+            txt_ids,
+            l_pooled,
+            timesteps=timesteps,
+            guidance=scale,
+            t5_attn_mask=t5_attn_mask,
+        )
 
     x = x.float()
     x = flux_utils.unpack_latents(x, packed_latent_height, packed_latent_width)
@@ -239,7 +269,9 @@ def sample_image_inference(
 
     x = x.clamp(-1, 1)
     x = x.permute(0, 2, 3, 1)
-    image = Image.fromarray((127.5 * (x + 1.0)).float().cpu().numpy().astype(np.uint8)[0])
+    image = Image.fromarray(
+        (127.5 * (x + 1.0)).float().cpu().numpy().astype(np.uint8)[0]
+    )
 
     # adding accelerator.wait_for_everyone() here should sync up and ensure that sample images are saved in the same order as the original prompt list
     # but adding 'enum' to the filename should be enough
@@ -256,21 +288,33 @@ def sample_image_inference(
         wandb_tracker = accelerator.get_tracker("wandb")
 
         import wandb
+
         # not to commit images to avoid inconsistency between training and logging steps
         wandb_tracker.log(
-            {f"sample_{i}": wandb.Image(
-                image,
-                caption=prompt # positive prompt as a caption
-            )}, 
-            commit=False
+            {
+                f"sample_{i}": wandb.Image(
+                    image,
+                    caption=prompt,  # positive prompt as a caption
+                )
+            },
+            commit=False,
         )
+    if "dvc" in [tracker.name for tracker in accelerator.trackers]:
+        live = accelerator.get_tracker("dvclive", unwrap=True)
+
+        import dvclive
+
+        # not to commit images to avoid inconsistency between training and logging steps
+        live.log_image(f"img_{i}/{live.step}.png", image)
 
 
 def time_shift(mu: float, sigma: float, t: torch.Tensor):
     return math.exp(mu) / (math.exp(mu) + (1 / t - 1) ** sigma)
 
 
-def get_lin_function(x1: float = 256, y1: float = 0.5, x2: float = 4096, y2: float = 1.15) -> Callable[[float], float]:
+def get_lin_function(
+    x1: float = 256, y1: float = 0.5, x2: float = 4096, y2: float = 1.15
+) -> Callable[[float], float]:
     m = (y2 - y1) / (x2 - x1)
     b = y1 - m * x1
     return lambda x: m * x + b
@@ -307,7 +351,9 @@ def denoise(
     t5_attn_mask: Optional[torch.Tensor] = None,
 ):
     # this is ignored for schnell
-    guidance_vec = torch.full((img.shape[0],), guidance, device=img.device, dtype=img.dtype)
+    guidance_vec = torch.full(
+        (img.shape[0],), guidance, device=img.device, dtype=img.dtype
+    )
     for t_curr, t_prev in zip(tqdm(timesteps[:-1]), timesteps[1:]):
         t_vec = torch.full((img.shape[0],), t_curr, dtype=img.dtype, device=img.device)
         model.prepare_block_swap_before_forward()
@@ -323,7 +369,7 @@ def denoise(
         )
 
         img = img + (t_prev - t_curr) * pred
-        
+
     model.prepare_block_swap_before_forward()
     return img
 
@@ -345,7 +391,11 @@ def get_sigmas(noise_scheduler, timesteps, device, n_dim=4, dtype=torch.float32)
 
 
 def compute_density_for_timestep_sampling(
-    weighting_scheme: str, batch_size: int, logit_mean: float = None, logit_std: float = None, mode_scale: float = None
+    weighting_scheme: str,
+    batch_size: int,
+    logit_mean: float = None,
+    logit_std: float = None,
+    mode_scale: float = None,
 ):
     """Compute the density for sampling the timesteps when doing SD3 training.
 
@@ -355,7 +405,9 @@ def compute_density_for_timestep_sampling(
     """
     if weighting_scheme == "logit_normal":
         # See 3.1 in the SD3 paper ($rf/lognorm(0.00,1.00)$).
-        u = torch.normal(mean=logit_mean, std=logit_std, size=(batch_size,), device="cpu")
+        u = torch.normal(
+            mean=logit_mean, std=logit_std, size=(batch_size,), device="cpu"
+        )
         u = torch.nn.functional.sigmoid(u)
     elif weighting_scheme == "mode":
         u = torch.rand(size=(batch_size,), device="cpu")
@@ -402,7 +454,9 @@ def get_noisy_model_input_and_timesteps(
     elif args.timestep_sampling == "shift":
         shift = args.discrete_flow_shift
         logits_norm = torch.randn(bsz, device=device)
-        logits_norm = logits_norm * args.sigmoid_scale  # larger scale for more uniform sampling
+        logits_norm = (
+            logits_norm * args.sigmoid_scale
+        )  # larger scale for more uniform sampling
         timesteps = logits_norm.sigmoid()
         timesteps = (timesteps * shift) / (1 + (shift - 1) * timesteps)
 
@@ -411,7 +465,9 @@ def get_noisy_model_input_and_timesteps(
         noisy_model_input = (1 - t) * latents + t * noise
     elif args.timestep_sampling == "flux_shift":
         logits_norm = torch.randn(bsz, device=device)
-        logits_norm = logits_norm * args.sigmoid_scale  # larger scale for more uniform sampling
+        logits_norm = (
+            logits_norm * args.sigmoid_scale
+        )  # larger scale for more uniform sampling
         timesteps = logits_norm.sigmoid()
         mu = get_lin_function(y1=0.5, y2=1.15)((h // 2) * (w // 2))
         timesteps = time_shift(mu, 1.0, timesteps)
@@ -433,7 +489,9 @@ def get_noisy_model_input_and_timesteps(
         timesteps = noise_scheduler.timesteps[indices].to(device=device)
 
         # Add noise according to flow matching.
-        sigmas = get_sigmas(noise_scheduler, timesteps, device, n_dim=latents.ndim, dtype=dtype)
+        sigmas = get_sigmas(
+            noise_scheduler, timesteps, device, n_dim=latents.ndim, dtype=dtype
+        )
         noisy_model_input = sigmas * noise + (1.0 - sigmas) * latents
 
     return noisy_model_input, timesteps, sigmas
@@ -452,7 +510,9 @@ def apply_model_prediction_type(args, model_pred, noisy_model_input, sigmas):
 
         # these weighting schemes use a uniform timestep sampling
         # and instead post-weight the loss
-        weighting = compute_loss_weighting_for_sd3(weighting_scheme=args.weighting_scheme, sigmas=sigmas)
+        weighting = compute_loss_weighting_for_sd3(
+            weighting_scheme=args.weighting_scheme, sigmas=sigmas
+        )
 
     return model_pred, weighting
 
@@ -482,13 +542,21 @@ def save_models(
 
 
 def save_flux_model_on_train_end(
-    args: argparse.Namespace, save_dtype: torch.dtype, epoch: int, global_step: int, flux: flux_models.Flux
+    args: argparse.Namespace,
+    save_dtype: torch.dtype,
+    epoch: int,
+    global_step: int,
+    flux: flux_models.Flux,
 ):
     def sd_saver(ckpt_file, epoch_no, global_step):
-        sai_metadata = train_util.get_sai_model_spec(None, args, False, False, False, is_stable_diffusion_ckpt=True, flux="dev")
+        sai_metadata = train_util.get_sai_model_spec(
+            None, args, False, False, False, is_stable_diffusion_ckpt=True, flux="dev"
+        )
         save_models(ckpt_file, flux, sai_metadata, save_dtype, args.mem_eff_save)
 
-    train_util.save_sd_model_on_train_end_common(args, True, True, epoch, global_step, sd_saver, None)
+    train_util.save_sd_model_on_train_end_common(
+        args, True, True, epoch, global_step, sd_saver, None
+    )
 
 
 # epochとstepの保存、メタデータにepoch/stepが含まれ引数が同じになるため、統合している
@@ -504,7 +572,9 @@ def save_flux_model_on_epoch_end_or_stepwise(
     flux: flux_models.Flux,
 ):
     def sd_saver(ckpt_file, epoch_no, global_step):
-        sai_metadata = train_util.get_sai_model_spec(None, args, False, False, False, is_stable_diffusion_ckpt=True, flux="dev")
+        sai_metadata = train_util.get_sai_model_spec(
+            None, args, False, False, False, is_stable_diffusion_ckpt=True, flux="dev"
+        )
         save_models(ckpt_file, flux, sai_metadata, save_dtype, args.mem_eff_save)
 
     train_util.save_sd_model_on_epoch_end_or_stepwise_common(
@@ -535,7 +605,11 @@ def add_flux_train_arguments(parser: argparse.ArgumentParser):
         type=str,
         help="path to t5xxl (*.sft or *.safetensors), should be float16 / t5xxlのパス（*.sftまたは*.safetensors）、float16が前提",
     )
-    parser.add_argument("--ae", type=str, help="path to ae (*.sft or *.safetensors) / aeのパス（*.sftまたは*.safetensors）")
+    parser.add_argument(
+        "--ae",
+        type=str,
+        help="path to ae (*.sft or *.safetensors) / aeのパス（*.sftまたは*.safetensors）",
+    )
     parser.add_argument(
         "--t5xxl_max_token_length",
         type=int,
@@ -549,7 +623,9 @@ def add_flux_train_arguments(parser: argparse.ArgumentParser):
         help="apply attention mask to T5-XXL encode and FLUX double blocks / T5-XXLエンコードとFLUXダブルブロックにアテンションマスクを適用する",
     )
     parser.add_argument(
-        "--cache_text_encoder_outputs", action="store_true", help="cache text encoder outputs / text encoderの出力をキャッシュする"
+        "--cache_text_encoder_outputs",
+        action="store_true",
+        help="cache text encoder outputs / text encoderの出力をキャッシュする",
     )
     parser.add_argument(
         "--cache_text_encoder_outputs_to_disk",
@@ -577,9 +653,17 @@ def add_flux_train_arguments(parser: argparse.ArgumentParser):
         choices=["sigma_sqrt", "logit_normal", "mode", "cosmap", "none"],
     )
     parser.add_argument(
-        "--logit_mean", type=float, default=0.0, help="mean to use when using the `'logit_normal'` weighting scheme."
+        "--logit_mean",
+        type=float,
+        default=0.0,
+        help="mean to use when using the `'logit_normal'` weighting scheme.",
     )
-    parser.add_argument("--logit_std", type=float, default=1.0, help="std to use when using the `'logit_normal'` weighting scheme.")
+    parser.add_argument(
+        "--logit_std",
+        type=float,
+        default=1.0,
+        help="std to use when using the `'logit_normal'` weighting scheme.",
+    )
     parser.add_argument(
         "--mode_scale",
         type=float,

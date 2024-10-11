@@ -130,21 +130,18 @@ IMAGE_EXTENSIONS = [
 ]
 
 try:
-
     IMAGE_EXTENSIONS.extend([".avif", ".AVIF"])
 except:
     pass
 
 # JPEG-XL on Linux
 try:
-
     IMAGE_EXTENSIONS.extend([".jxl", ".JXL"])
 except:
     pass
 
 # JPEG-XL on Windows
 try:
-
     IMAGE_EXTENSIONS.extend([".jxl", ".JXL"])
 except:
     pass
@@ -5799,6 +5796,21 @@ def prepare_accelerator(args: argparse.Namespace):
                 os.environ["WANDB_DIR"] = logging_dir
             if args.wandb_api_key is not None:
                 wandb.login(key=args.wandb_api_key)
+
+        if log_with in ["dvc", "all"]:
+            try:
+                import dvclive
+                import dvc
+            except ImportError:
+                raise ImportError(
+                    "No dvclive & dvc / dvclive & dvc がインストールされていないようです"
+                )
+            log_with = "dvclive"
+            if logging_dir is not None:
+                os.makedirs(logging_dir, exist_ok=True)
+                os.environ["DVC_DIR"] = logging_dir
+            else:
+                logging_dir = ".dvc-output/"
 
     # torch.compile のオプション。 NO の場合は torch.compile は使わない
     dynamo_backend = "NO"
