@@ -5329,6 +5329,39 @@ def get_optimizer(args, trainable_params):
             optimizer_class = prodigyopt.Prodigy
             optimizer = optimizer_class(trainable_params, lr=lr, **optimizer_kwargs)
 
+    elif optimizer_type.lower().startswith("Pyro-Wrapper".lower()):
+        try:
+            from pyrodigy import OptimizerWrapper
+
+            # Extract necessary information from optimizer_kwargs
+            optimizer_name = optimizer_kwargs.pop("id", "adabelief")
+            optimizer_config = optimizer_kwargs.pop("cfg", "low_memory")
+
+            # Define optimizer_class using the optimizer name
+            optimizer_class = OptimizerWrapper(optimizer=optimizer_name)
+
+            # Initialize the optimizer using the Wrapper
+            optimizer = optimizer_class(
+                trainable_params,
+                optimizer_name=optimizer_name,
+                config_name=optimizer_config,
+                lr=lr,
+                **optimizer_kwargs,
+            )
+
+        except ImportError:
+            raise ImportError(
+                "No pytorch_optimizer / pytorch_optimizerがインストールされていないようです"
+            )
+        except Exception as e:
+            logger.error(
+                "An error occurred while loading the optimizer:", exc_info=True
+            )
+            raise RuntimeError(
+                f"Failed to initialize optimizer '{optimizer_name}' with type '{optimizer_type}'. "
+                "Please check the optimizer name, configuration, and installation."
+            ) from e
+
     elif optimizer_type == "Adafactor".lower():
         # 引数を確認して適宜補正する
         if "relative_step" not in optimizer_kwargs:
@@ -5799,8 +5832,8 @@ def prepare_accelerator(args: argparse.Namespace):
 
         if log_with in ["dvc", "all"]:
             try:
-                import dvclive
                 import dvc
+                import dvclive
             except ImportError:
                 raise ImportError(
                     "No dvclive & dvc / dvclive & dvc がインストールされていないようです"
