@@ -41,5 +41,8 @@ imagesize==1.4.1
 rich==13.7.0
 # for T5XXL tokenizer (SD3/FLUX)
 sentencepiece==0.2.0
+pytorch-optimizer
+dvc
+dvclive
 # for kohya_ss library
 -e .
