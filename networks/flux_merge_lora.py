@@ -5,11 +5,15 @@ import time
 from typing import Any, Dict, Union
 
 import torch
+from library.utils import (
+    MemoryEfficientSafeOpen,
+    mem_eff_save_file,
+    setup_logging,
+    str_to_dtype,
+)
 from safetensors import safe_open
 from safetensors.torch import load_file, save_file
 from tqdm import tqdm
-
-from library.utils import setup_logging, str_to_dtype, MemoryEfficientSafeOpen, mem_eff_save_file
 
 setup_logging()
 import logging
@@ -125,7 +129,7 @@ def merge_to_flux_model(
         logger.info(f"loading: {model}")
         lora_sd, _ = load_state_dict(model, merge_dtype)  # loading on CPU
 
-        logger.info(f"merging...")
+        logger.info("merging...")
         for key in tqdm(list(lora_sd.keys())):
             if "lora_down" in key:
                 lora_name = key[: key.rfind(".lora_down")]

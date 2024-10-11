@@ -1,13 +1,13 @@
 import argparse
+import functools
+import json
+import random
 from dataclasses import (
     asdict,
     dataclass,
 )
-import functools
-import random
-from textwrap import dedent, indent
-import json
 from pathlib import Path
+from textwrap import dedent, indent
 
 # from toolz import curry
 from typing import (
@@ -28,17 +28,16 @@ from voluptuous import (
     Required,
     Schema,
 )
-from transformers import CLIPTokenizer
 
 from . import train_util
 from .train_util import (
-    DreamBoothSubset,
-    FineTuningSubset,
-    ControlNetSubset,
-    DreamBoothDataset,
-    FineTuningDataset,
     ControlNetDataset,
+    ControlNetSubset,
     DatasetGroup,
+    DreamBoothDataset,
+    DreamBoothSubset,
+    FineTuningDataset,
+    FineTuningSubset,
 )
 from .utils import setup_logging
 
@@ -585,7 +584,7 @@ def generate_dreambooth_subsets_config_by_subdirs(train_data_dir: Optional[str] 
         tokens = name.split("_")
         try:
             n_repeats = int(tokens[0])
-        except ValueError as e:
+        except ValueError:
             logger.warning(f"ignore directory without repeats / 繰り返し回数のないディレクトリを無視します: {name}")
             return 0, ""
         caption_by_folder = "_".join(tokens[1:])

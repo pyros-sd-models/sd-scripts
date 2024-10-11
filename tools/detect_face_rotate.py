@@ -8,16 +8,19 @@
 # v4: add multiple faces extraction and min/max size
 
 import argparse
-import math
-import cv2
 import glob
+import math
 import os
-from anime_face_detector import create_detector
-from tqdm import tqdm
+
+import cv2
 import numpy as np
-from library.utils import setup_logging, pil_resize
+from anime_face_detector import create_detector
+from library.utils import pil_resize, setup_logging
+from tqdm import tqdm
+
 setup_logging()
 import logging
+
 logger = logging.getLogger(__name__)
 
 KP_REYE = 11
@@ -78,8 +81,8 @@ def rotate_image(image, angle, cx, cy):
 
 
 def process(args):
-  assert (not args.resize_fit) or args.resize_face_size is None, f"resize_fit and resize_face_size can't be specified both / resize_fitとresize_face_sizeはどちらか片方しか指定できません"
-  assert args.crop_ratio is None or args.resize_face_size is None, f"crop_ratio指定時はresize_face_sizeは指定できません"
+  assert (not args.resize_fit) or args.resize_face_size is None, "resize_fit and resize_face_size can't be specified both / resize_fitとresize_face_sizeはどちらか片方しか指定できません"
+  assert args.crop_ratio is None or args.resize_face_size is None, "crop_ratio指定時はresize_face_sizeは指定できません"
 
   # アニメ顔検出モデルを読み込む
   logger.info("loading face detector.")
@@ -90,14 +93,14 @@ def process(args):
     crop_width = crop_height = None
   else:
     tokens = args.crop_size.split(',')
-    assert len(tokens) == 2, f"crop_size must be 'width,height' / crop_sizeは'幅,高さ'で指定してください"
+    assert len(tokens) == 2, "crop_size must be 'width,height' / crop_sizeは'幅,高さ'で指定してください"
     crop_width, crop_height = [int(t) for t in tokens]
 
   if args.crop_ratio is None:
     crop_h_ratio = crop_v_ratio = None
   else:
     tokens = args.crop_ratio.split(',')
-    assert len(tokens) == 2, f"crop_ratio must be 'horizontal,vertical' / crop_ratioは'幅,高さ'の倍率で指定してください"
+    assert len(tokens) == 2, "crop_ratio must be 'horizontal,vertical' / crop_ratioは'幅,高さ'の倍率で指定してください"
     crop_h_ratio, crop_v_ratio = [float(t) for t in tokens]
 
   # 画像を処理する

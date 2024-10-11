@@ -6,19 +6,18 @@ import math
 import os
 import random
 from typing import Callable, List, Optional
+
+import accelerate
 import einops
 import numpy as np
-
 import torch
-from tqdm import tqdm
-from PIL import Image
-import accelerate
-from transformers import CLIPTextModel
-from safetensors.torch import load_file
-
 from library import device_utils
-from library.device_utils import init_ipex, get_preferred_device
+from library.device_utils import get_preferred_device, init_ipex
 from networks import oft_flux
+from PIL import Image
+from safetensors.torch import load_file
+from tqdm import tqdm
+from transformers import CLIPTextModel
 
 init_ipex()
 
@@ -31,7 +30,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 import networks.lora_flux as lora_flux
-from library import flux_models, flux_utils, sd3_utils, strategy_flux
+from library import flux_models, flux_utils, strategy_flux
 
 
 def time_shift(mu: float, sigma: float, t: torch.Tensor):

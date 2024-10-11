@@ -1,13 +1,20 @@
-import torch
+from typing import List
+
 import safetensors
+import torch
 from accelerate import init_empty_weights
 from accelerate.utils.modeling import set_module_tensor_to_device
-from safetensors.torch import load_file, save_file
-from transformers import CLIPTextModel, CLIPTextConfig, CLIPTextModelWithProjection, CLIPTokenizer
-from typing import List
 from diffusers import AutoencoderKL, EulerDiscreteScheduler, UNet2DConditionModel
-from library import model_util
-from library import sdxl_original_unet
+from safetensors.torch import load_file, save_file
+from transformers import (
+    CLIPTextConfig,
+    CLIPTextModel,
+    CLIPTextModelWithProjection,
+    CLIPTokenizer,
+)
+
+from library import model_util, sdxl_original_unet
+
 from .utils import setup_logging
 
 setup_logging()

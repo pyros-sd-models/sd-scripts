@@ -1,9 +1,9 @@
 import os
-from functools import wraps
 from contextlib import nullcontext
-import torch
-import intel_extension_for_pytorch as ipex # pylint: disable=import-error, unused-import
+from functools import wraps
+
 import numpy as np
+import torch
 
 device_supports_fp64 = torch.xpu.has_fp64_dtype()
 
@@ -79,8 +79,10 @@ if device_supports_fp64 and os.environ.get('IPEX_FORCE_ATTENTION_SLICE', None) i
 else:
     # 32 bit attention workarounds for Alchemist:
     try:
+        from .attention import (
+            scaled_dot_product_attention_32_bit as original_scaled_dot_product_attention,
+        )
         from .attention import torch_bmm_32_bit as original_torch_bmm
-        from .attention import scaled_dot_product_attention_32_bit as original_scaled_dot_product_attention
     except Exception: # pylint: disable=broad-exception-caught
         original_torch_bmm = torch.bmm
         original_scaled_dot_product_attention = torch.nn.functional.scaled_dot_product_attention

@@ -1,12 +1,15 @@
 import os
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Union
 
 import numpy as np
 import torch
-from transformers import CLIPTokenizer, CLIPTextModel, CLIPTextModelWithProjection
-from library.strategy_base import TokenizeStrategy, TextEncodingStrategy, TextEncoderOutputsCachingStrategy
+from transformers import CLIPTextModel, CLIPTextModelWithProjection, CLIPTokenizer
 
-
+from library.strategy_base import (
+    TextEncoderOutputsCachingStrategy,
+    TextEncodingStrategy,
+    TokenizeStrategy,
+)
 from library.utils import setup_logging
 
 setup_logging()

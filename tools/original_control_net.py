@@ -1,15 +1,16 @@
-from typing import List, NamedTuple, Any
-import numpy as np
+from typing import Any, List, NamedTuple
+
 import cv2
+import library.model_util as model_util
+import numpy as np
 import torch
+from library.original_unet import SampleOutput, UNet2DConditionModel
+from library.utils import setup_logging
 from safetensors.torch import load_file
 
-from library.original_unet import UNet2DConditionModel, SampleOutput
-
-import library.model_util as model_util
-from library.utils import setup_logging
 setup_logging()
 import logging
+
 logger = logging.getLogger(__name__)
 
 class ControlNetInfo(NamedTuple):

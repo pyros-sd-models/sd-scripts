@@ -4,14 +4,13 @@ import os
 from pathlib import Path
 
 import cv2
+import library.train_util as train_util
 import numpy as np
 import torch
 from huggingface_hub import hf_hub_download
+from library.utils import pil_resize, setup_logging
 from PIL import Image
 from tqdm import tqdm
-
-import library.train_util as train_util
-from library.utils import setup_logging, pil_resize
 
 setup_logging()
 import logging

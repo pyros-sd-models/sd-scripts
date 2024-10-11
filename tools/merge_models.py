@@ -2,12 +2,14 @@ import argparse
 import os
 
 import torch
-from safetensors import safe_open
-from safetensors.torch import load_file, save_file
-from tqdm import tqdm
 from library.utils import setup_logging
+from safetensors import safe_open
+from safetensors.torch import save_file
+from tqdm import tqdm
+
 setup_logging()
 import logging
+
 logger = logging.getLogger(__name__)
 
 def is_unet_key(key):

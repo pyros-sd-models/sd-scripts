@@ -4,16 +4,14 @@ import argparse
 import datetime
 import math
 import os
-import random
 from typing import Optional, Tuple
+
 import numpy as np
-
 import torch
-from safetensors.torch import safe_open, load_file
-from tqdm import tqdm
+from library.device_utils import get_preferred_device, init_ipex
 from PIL import Image
-
-from library.device_utils import init_ipex, get_preferred_device
+from safetensors.torch import load_file
+from tqdm import tqdm
 
 init_ipex()
 

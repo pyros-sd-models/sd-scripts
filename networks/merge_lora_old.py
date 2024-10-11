@@ -2,13 +2,16 @@
 
 import argparse
 import os
-import torch
-from safetensors.torch import load_file, save_file
+
 import library.model_util as model_util
 import lora
+import torch
 from library.utils import setup_logging
+from safetensors.torch import load_file, save_file
+
 setup_logging()
 import logging
+
 logger = logging.getLogger(__name__)
 
 def load_state_dict(file_name, dtype):
@@ -60,7 +63,7 @@ def merge_to_sd_model(text_encoder, unet, models, ratios, merge_dtype):
     logger.info(f"loading: {model}")
     lora_sd = load_state_dict(model, merge_dtype)
 
-    logger.info(f"merging...")
+    logger.info("merging...")
     for key in lora_sd.keys():
       if "lora_down" in key:
         up_key = key.replace("lora_down", "lora_up")
@@ -102,18 +105,18 @@ def merge_lora_models(models, ratios, merge_dtype):
     logger.info(f"loading: {model}")
     lora_sd = load_state_dict(model, merge_dtype)
 
-    logger.info(f"merging...")
+    logger.info("merging...")
     for key in lora_sd.keys():
       if 'alpha' in key:
         if key in merged_sd:
-          assert merged_sd[key] == lora_sd[key], f"alpha mismatch / alphaが異なる場合、現時点ではマージできません"
+          assert merged_sd[key] == lora_sd[key], "alpha mismatch / alphaが異なる場合、現時点ではマージできません"
         else:
           alpha = lora_sd[key].detach().numpy()
           merged_sd[key] = lora_sd[key]
       else:
         if key in merged_sd:
           assert merged_sd[key].size() == lora_sd[key].size(
-          ), f"weights shape mismatch merging v1 and v2, different dims? / 重みのサイズが合いません。v1とv2、または次元数の異なるモデルはマージできません"
+          ), "weights shape mismatch merging v1 and v2, different dims? / 重みのサイズが合いません。v1とv2、または次元数の異なるモデルはマージできません"
           merged_sd[key] = merged_sd[key] + lora_sd[key] * ratio
         else:
           if "lora_down" in key:
@@ -128,7 +131,7 @@ def merge_lora_models(models, ratios, merge_dtype):
 
 
 def merge(args):
-  assert len(args.models) == len(args.ratios), f"number of models must be equal to number of ratios / モデルの数と重みの数は合わせてください"
+  assert len(args.models) == len(args.ratios), "number of models must be equal to number of ratios / モデルの数と重みの数は合わせてください"
 
   def str_to_dtype(p):
     if p == 'float':
@@ -158,7 +161,7 @@ def merge(args):
   else:
     state_dict, _, _ = merge_lora_models(args.models, args.ratios, merge_dtype)
 
-    logger.info(f"")
+    logger.info("")
     logger.info(f"saving model to: {args.save_to}")
     save_to_file(args.save_to, state_dict, state_dict, save_dtype)
 

@@ -5,26 +5,27 @@ import copy
 import math
 import os
 from multiprocessing import Value
-from typing import List
+
 import toml
-
-from tqdm import tqdm
-
 import torch
-from library.device_utils import init_ipex, clean_memory_on_device
+from library.device_utils import clean_memory_on_device, init_ipex
+from tqdm import tqdm
 
 init_ipex()
 
-from accelerate.utils import set_seed
-from diffusers import DDPMScheduler
-from library import deepspeed_utils, sd3_models, sd3_train_utils, sd3_utils, strategy_base, strategy_sd3
-from library.sdxl_train_util import match_mixed_precision
-
 # , sdxl_model_util
-
 import library.train_util as train_util
-
-from library.utils import setup_logging, add_logging_arguments
+from accelerate.utils import set_seed
+from library import (
+    deepspeed_utils,
+    sd3_models,
+    sd3_train_utils,
+    sd3_utils,
+    strategy_base,
+    strategy_sd3,
+)
+from library.sdxl_train_util import match_mixed_precision
+from library.utils import add_logging_arguments, setup_logging
 
 setup_logging()
 import logging
@@ -32,13 +33,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 import library.config_util as config_util
+import library.custom_train_functions as custom_train_functions
 
 # import library.sdxl_train_util as sdxl_train_util
 from library.config_util import (
-    ConfigSanitizer,
     BlueprintGenerator,
+    ConfigSanitizer,
 )
-import library.custom_train_functions as custom_train_functions
 
 # from library.custom_train_functions import (
 #     apply_snr_weight,

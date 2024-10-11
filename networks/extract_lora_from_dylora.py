@@ -3,16 +3,16 @@
 # Thanks to cloneofsimo
 
 import argparse
-import math
 import os
+
 import torch
-from safetensors.torch import load_file, save_file, safe_open
-from tqdm import tqdm
-from library import train_util, model_util
-import numpy as np
+from library import model_util, train_util
 from library.utils import setup_logging
+from safetensors.torch import load_file, safe_open, save_file
+
 setup_logging()
 import logging
+
 logger = logging.getLogger(__name__)
 
 def load_state_dict(file_name):

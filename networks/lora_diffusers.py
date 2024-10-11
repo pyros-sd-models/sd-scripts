@@ -5,18 +5,21 @@ import bisect
 import math
 import random
 from typing import Any, Dict, List, Mapping, Optional, Union
-from diffusers import UNet2DConditionModel
+
 import numpy as np
+import torch
+from diffusers import UNet2DConditionModel
+from library.device_utils import get_preferred_device, init_ipex
 from tqdm import tqdm
 from transformers import CLIPTextModel
 
-import torch
-from library.device_utils import init_ipex, get_preferred_device
 init_ipex()
 
 from library.utils import setup_logging
+
 setup_logging()
 import logging
+
 logger = logging.getLogger(__name__)
 
 def make_unet_conversion_map() -> Dict[str, str]:
@@ -443,13 +446,13 @@ class LoRANetwork(torch.nn.Module):
         logger.info("merge LoRA weights to original weights")
         for lora in tqdm(self.text_encoder_loras + self.unet_loras):
             lora.merge_to(multiplier)
-        logger.info(f"weights are merged")
+        logger.info("weights are merged")
 
     def restore_from(self, multiplier=1.0):
         logger.info("restore LoRA weights from original weights")
         for lora in tqdm(self.text_encoder_loras + self.unet_loras):
             lora.restore_from(multiplier)
-        logger.info(f"weights are restored")
+        logger.info("weights are restored")
 
     def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True):
         # convert SDXL Stability AI's state dict to Diffusers' based state dict
@@ -478,10 +481,11 @@ class LoRANetwork(torch.nn.Module):
 
 if __name__ == "__main__":
     # sample code to use LoRANetwork
-    import os
     import argparse
-    from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline
+    import os
+
     import torch
+    from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline
 
     device = get_preferred_device()
 
@@ -519,10 +523,10 @@ if __name__ == "__main__":
         lora_sd = torch.load(args.lora_weights)
 
     # create by LoRA weights and load weights
-    logger.info(f"create LoRA network")
+    logger.info("create LoRA network")
     lora_network: LoRANetwork = create_network_from_weights(text_encoders, pipe.unet, lora_sd, multiplier=1.0)
 
-    logger.info(f"load LoRA network weights")
+    logger.info("load LoRA network weights")
     lora_network.load_state_dict(lora_sd)
 
     lora_network.to(device, dtype=pipe.unet.dtype)  # required to apply_to. merge_to works without this
@@ -551,34 +555,34 @@ if __name__ == "__main__":
         random.seed(seed)
 
     # create image with original weights
-    logger.info(f"create image with original weights")
+    logger.info("create image with original weights")
     seed_everything(args.seed)
     image = pipe(args.prompt, negative_prompt=args.negative_prompt).images[0]
     image.save(image_prefix + "original.png")
 
     # apply LoRA network to the model: slower than merge_to, but can be reverted easily
-    logger.info(f"apply LoRA network to the model")
+    logger.info("apply LoRA network to the model")
     lora_network.apply_to(multiplier=1.0)
 
-    logger.info(f"create image with applied LoRA")
+    logger.info("create image with applied LoRA")
     seed_everything(args.seed)
     image = pipe(args.prompt, negative_prompt=args.negative_prompt).images[0]
     image.save(image_prefix + "applied_lora.png")
 
     # unapply LoRA network to the model
-    logger.info(f"unapply LoRA network to the model")
+    logger.info("unapply LoRA network to the model")
     lora_network.unapply_to()
 
-    logger.info(f"create image with unapplied LoRA")
+    logger.info("create image with unapplied LoRA")
     seed_everything(args.seed)
     image = pipe(args.prompt, negative_prompt=args.negative_prompt).images[0]
     image.save(image_prefix + "unapplied_lora.png")
 
     # merge LoRA network to the model: faster than apply_to, but requires back-up of original weights (or unmerge_to)
-    logger.info(f"merge LoRA network to the model")
+    logger.info("merge LoRA network to the model")
     lora_network.merge_to(multiplier=1.0)
 
-    logger.info(f"create image with LoRA")
+    logger.info("create image with LoRA")
     seed_everything(args.seed)
     image = pipe(args.prompt, negative_prompt=args.negative_prompt).images[0]
     image.save(image_prefix + "merged_lora.png")
@@ -586,31 +590,31 @@ if __name__ == "__main__":
     # restore (unmerge) LoRA weights: numerically unstable
     # マージされた重みを元に戻す。計算誤差のため、元の重みと完全に一致しないことがあるかもしれない
     # 保存したstate_dictから元の重みを復元するのが確実
-    logger.info(f"restore (unmerge) LoRA weights")
+    logger.info("restore (unmerge) LoRA weights")
     lora_network.restore_from(multiplier=1.0)
 
-    logger.info(f"create image without LoRA")
+    logger.info("create image without LoRA")
     seed_everything(args.seed)
     image = pipe(args.prompt, negative_prompt=args.negative_prompt).images[0]
     image.save(image_prefix + "unmerged_lora.png")
 
     # restore original weights
-    logger.info(f"restore original weights")
+    logger.info("restore original weights")
     pipe.unet.load_state_dict(org_unet_sd)
     pipe.text_encoder.load_state_dict(org_text_encoder_sd)
     if args.sdxl:
         pipe.text_encoder_2.load_state_dict(org_text_encoder_2_sd)
 
-    logger.info(f"create image with restored original weights")
+    logger.info("create image with restored original weights")
     seed_everything(args.seed)
     image = pipe(args.prompt, negative_prompt=args.negative_prompt).images[0]
     image.save(image_prefix + "restore_original.png")
 
     # use convenience function to merge LoRA weights
-    logger.info(f"merge LoRA weights with convenience function")
+    logger.info("merge LoRA weights with convenience function")
     merge_lora_weights(pipe, lora_sd, multiplier=1.0)
 
-    logger.info(f"create image with merged LoRA weights")
+    logger.info("create image with merged LoRA weights")
     seed_everything(args.seed)
     image = pipe(args.prompt, negative_prompt=args.negative_prompt).images[0]
     image.save(image_prefix + "convenience_merged_lora.png")

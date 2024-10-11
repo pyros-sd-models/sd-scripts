@@ -6,14 +6,17 @@ import argparse
 import json
 import os
 import time
-import torch
-from safetensors.torch import load_file, save_file
-from tqdm import tqdm
-from library import sai_model_spec, model_util, sdxl_model_util
+
 import lora
+import torch
+from library import model_util, sai_model_spec, sdxl_model_util
 from library.utils import setup_logging
+from safetensors.torch import save_file
+from tqdm import tqdm
+
 setup_logging()
 import logging
+
 logger = logging.getLogger(__name__)
 
 # CLAMP_QUANTILE = 0.99
@@ -120,7 +123,7 @@ def svd(
     lora_network_t = lora.create_network(1.0, dim, dim, None, text_encoders_t, unet_t, **kwargs)
     assert len(lora_network_o.text_encoder_loras) == len(
         lora_network_t.text_encoder_loras
-    ), f"model version is different (SD1.x vs SD2.x) / それぞれのモデルのバージョンが違います（SD1.xベースとSD2.xベース） "
+    ), "model version is different (SD1.x vs SD2.x) / それぞれのモデルのバージョンが違います（SD1.xベースとSD2.xベース） "
 
     # get diffs
     diffs = {}

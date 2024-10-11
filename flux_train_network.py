@@ -1,17 +1,23 @@
 import argparse
 import copy
-import math
-import random
 from typing import Any, Optional
 
 import torch
 from accelerate import Accelerator
-from library.device_utils import init_ipex, clean_memory_on_device
+from library.device_utils import clean_memory_on_device, init_ipex
 
 init_ipex()
 
-from library import flux_models, flux_train_utils, flux_utils, sd3_train_utils, strategy_base, strategy_flux, train_util
 import train_network
+from library import (
+    flux_models,
+    flux_train_utils,
+    flux_utils,
+    sd3_train_utils,
+    strategy_base,
+    strategy_flux,
+    train_util,
+)
 from library.utils import setup_logging
 
 setup_logging()
@@ -488,7 +494,7 @@ class FluxNetworkTrainer(train_network.NetworkTrainer):
                         module.forward = forward_hook(module)
 
             if flux_utils.get_t5xxl_actual_dtype(text_encoder) == torch.float8_e4m3fn and text_encoder.dtype == weight_dtype:
-                logger.info(f"T5XXL already prepared for fp8")
+                logger.info("T5XXL already prepared for fp8")
             else:
                 logger.info(f"prepare T5XXL for fp8: set to {te_weight_dtype}, set embeddings to {weight_dtype}, add hooks")
                 text_encoder.to(te_weight_dtype)  # fp8

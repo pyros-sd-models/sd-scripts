@@ -1,26 +1,24 @@
 import argparse
 import math
 import os
-import numpy as np
-import toml
-import json
 import time
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple
 
+import numpy as np
 import torch
 from accelerate import Accelerator, PartialState
-from transformers import CLIPTextModel
-from tqdm import tqdm
 from PIL import Image
 from safetensors.torch import save_file
+from tqdm import tqdm
+from transformers import CLIPTextModel
 
 from library import flux_models, flux_utils, strategy_base, train_util
+from library.device_utils import clean_memory_on_device, init_ipex
 from library.sd3_train_utils import load_prompts
-from library.device_utils import init_ipex, clean_memory_on_device
 
 init_ipex()
 
-from .utils import setup_logging, mem_eff_save_file
+from .utils import mem_eff_save_file, setup_logging
 
 setup_logging()
 import logging

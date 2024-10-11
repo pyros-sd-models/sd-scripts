@@ -6,39 +6,34 @@ import itertools
 import math
 import os
 from multiprocessing import Value
+
 import toml
-
-from tqdm import tqdm
-
 import torch
 from library import deepspeed_utils, strategy_base
-from library.device_utils import init_ipex, clean_memory_on_device
-
+from library.device_utils import clean_memory_on_device, init_ipex
+from tqdm import tqdm
 
 init_ipex()
 
+import library.config_util as config_util
+import library.custom_train_functions as custom_train_functions
+import library.strategy_sd as strategy_sd
+import library.train_util as train_util
 from accelerate.utils import set_seed
 from diffusers import DDPMScheduler
-
-import library.train_util as train_util
-import library.config_util as config_util
 from library.config_util import (
-    ConfigSanitizer,
     BlueprintGenerator,
+    ConfigSanitizer,
 )
-import library.custom_train_functions as custom_train_functions
 from library.custom_train_functions import (
+    apply_debiased_estimation,
+    apply_masked_loss,
     apply_snr_weight,
     get_weighted_text_embeddings,
     prepare_scheduler_for_custom_training,
-    pyramid_noise_like,
-    apply_noise_offset,
     scale_v_prediction_loss_like_noise_prediction,
-    apply_debiased_estimation,
-    apply_masked_loss,
 )
-from library.utils import setup_logging, add_logging_arguments
-import library.strategy_sd as strategy_sd
+from library.utils import add_logging_arguments, setup_logging
 
 setup_logging()
 import logging

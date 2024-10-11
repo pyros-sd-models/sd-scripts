@@ -1,12 +1,15 @@
-from typing import Union, BinaryIO
-from huggingface_hub import HfApi
-from pathlib import Path
 import argparse
 import os
-from library.utils import fire_in_thread
-from library.utils import setup_logging
+from pathlib import Path
+from typing import BinaryIO, Union
+
+from huggingface_hub import HfApi
+
+from library.utils import fire_in_thread, setup_logging
+
 setup_logging()
 import logging
+
 logger = logging.getLogger(__name__)
 
 def exists_repo(repo_id: str, repo_type: str, revision: str = "main", token: str = None):

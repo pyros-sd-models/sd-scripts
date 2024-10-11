@@ -1,22 +1,22 @@
 import argparse
 import os
 import re
-
 from pathlib import Path
+
+import torch
+from library.device_utils import init_ipex
 from PIL import Image
 from tqdm import tqdm
 
-import torch
-from library.device_utils import init_ipex, get_preferred_device
 init_ipex()
-
-from transformers import AutoProcessor, AutoModelForCausalLM
-from transformers.generation.utils import GenerationMixin
 
 import library.train_util as train_util
 from library.utils import setup_logging
+from transformers import AutoModelForCausalLM, AutoProcessor
+
 setup_logging()
 import logging
+
 logger = logging.getLogger(__name__)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")

@@ -46,65 +46,66 @@ VGG(
 )
 """
 
-import itertools
-import json
-from typing import Any, List, NamedTuple, Optional, Tuple, Union, Callable
+import argparse
 import glob
 import importlib
 import inspect
-import time
-import zipfile
-from diffusers.utils import deprecate
-from diffusers.configuration_utils import FrozenDict
-import argparse
-import math
+import itertools
 import os
 import random
 import re
+import time
+from typing import Any, Callable, List, NamedTuple, Optional, Tuple, Union
 
 import diffusers
 import numpy as np
-
 import torch
-from library.device_utils import init_ipex, clean_memory, get_preferred_device
+from diffusers.configuration_utils import FrozenDict
+from diffusers.utils import deprecate
+from library.device_utils import clean_memory, get_preferred_device, init_ipex
+
 init_ipex()
 
+import library.model_util as model_util
+import library.train_util as train_util
+import PIL
+import tools.original_control_net as original_control_net
 import torchvision
 from diffusers import (
     AutoencoderKL,
+    DDIMScheduler,
     DDPMScheduler,
-    EulerAncestralDiscreteScheduler,
     DPMSolverMultistepScheduler,
     DPMSolverSinglestepScheduler,
-    LMSDiscreteScheduler,
-    PNDMScheduler,
-    DDIMScheduler,
     EulerDiscreteScheduler,
     HeunDiscreteScheduler,
-    KDPM2DiscreteScheduler,
     KDPM2AncestralDiscreteScheduler,
+    KDPM2DiscreteScheduler,
+    LMSDiscreteScheduler,
+    PNDMScheduler,
     # UNet2DConditionModel,
     StableDiffusionPipeline,
 )
 from einops import rearrange
-from tqdm import tqdm
-from torchvision import transforms
-from transformers import CLIPTextModel, CLIPTokenizer, CLIPModel, CLIPTextConfig
-import PIL
+from library.original_unet import (
+    FlashAttentionFunction,
+    InferUNet2DConditionModel,
+    UNet2DConditionModel,
+)
+from library.utils import (
+    EulerAncestralDiscreteSchedulerGL,
+    GradualLatent,
+    add_logging_arguments,
+    setup_logging,
+)
+from networks.lora import LoRANetwork
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
-
-import library.model_util as model_util
-import library.train_util as train_util
-from networks.lora import LoRANetwork
-import tools.original_control_net as original_control_net
 from tools.original_control_net import ControlNetInfo
-from library.original_unet import UNet2DConditionModel, InferUNet2DConditionModel
-from library.original_unet import FlashAttentionFunction
-from library.utils import GradualLatent, EulerAncestralDiscreteSchedulerGL
-
-from XTI_hijack import unet_forward_XTI, downblock_forward_XTI, upblock_forward_XTI
-from library.utils import setup_logging, add_logging_arguments
+from torchvision import transforms
+from tqdm import tqdm
+from transformers import CLIPModel, CLIPTextModel, CLIPTokenizer
+from XTI_hijack import downblock_forward_XTI, unet_forward_XTI, upblock_forward_XTI
 
 setup_logging()
 import logging
@@ -700,7 +701,7 @@ class PipelineLike:
         do_classifier_free_guidance = guidance_scale > 1.0
 
         if not do_classifier_free_guidance and negative_scale is not None:
-            logger.warning(f"negative_scale is ignored if guidance scalle <= 1.0")
+            logger.warning("negative_scale is ignored if guidance scalle <= 1.0")
             negative_scale = None
 
         # get unconditional embeddings for classifier free guidance
@@ -2526,7 +2527,7 @@ def main(args):
             control_nets.append(ControlNetInfo(ctrl_unet, ctrl_net, prep, weight, ratio))
 
     if args.opt_channels_last:
-        logger.info(f"set optimizing: channels last")
+        logger.info("set optimizing: channels last")
         text_encoder.to(memory_format=torch.channels_last)
         vae.to(memory_format=torch.channels_last)
         unet.to(memory_format=torch.channels_last)
@@ -2629,7 +2630,7 @@ def main(args):
             logger.info(f"Textual Inversion embeddings `{token_string}` loaded. Tokens are added: {token_ids}")
             assert (
                 min(token_ids) == token_ids[0] and token_ids[-1] == token_ids[0] + len(token_ids) - 1
-            ), f"token ids is not ordered"
+            ), "token ids is not ordered"
             assert len(tokenizer) - 1 == token_ids[-1], f"token ids is not end of tokenize: {len(tokenizer)}"
 
             if num_vectors_per_token > 1:
@@ -3424,7 +3425,7 @@ def main(args):
                         height = height - height % 32
                         if width != init_image.size[0] or height != init_image.size[1]:
                             logger.info(
-                                f"img2img image size is not divisible by 32 so aspect ratio is changed / img2imgの画像サイズが32で割り切れないためリサイズされます。画像が歪みます"
+                                "img2img image size is not divisible by 32 so aspect ratio is changed / img2imgの画像サイズが32で割り切れないためリサイズされます。画像が歪みます"
                             )
 
                 if mask_images is not None:
@@ -3569,7 +3570,7 @@ def setup_parser() -> argparse.ArgumentParser:
             "k_dpm_2",
             "k_dpm_2_a",
         ],
-        help=f"sampler (scheduler) type / サンプラー（スケジューラ）の種類",
+        help="sampler (scheduler) type / サンプラー（スケジューラ）の種類",
     )
     parser.add_argument(
         "--scale",

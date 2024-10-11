@@ -3,38 +3,35 @@ import math
 import os
 from multiprocessing import Value
 from typing import Any, List
+
 import toml
-
-from tqdm import tqdm
-
 import torch
-from library.device_utils import init_ipex, clean_memory_on_device
-
+from library.device_utils import clean_memory_on_device, init_ipex
+from tqdm import tqdm
 
 init_ipex()
 
+import library.config_util as config_util
+import library.custom_train_functions as custom_train_functions
+import library.huggingface_util as huggingface_util
+import library.train_util as train_util
 from accelerate.utils import set_seed
 from diffusers import DDPMScheduler
-from transformers import CLIPTokenizer
 from library import deepspeed_utils, model_util, strategy_base, strategy_sd
-
-import library.train_util as train_util
-import library.huggingface_util as huggingface_util
-import library.config_util as config_util
 from library.config_util import (
-    ConfigSanitizer,
     BlueprintGenerator,
+    ConfigSanitizer,
 )
-import library.custom_train_functions as custom_train_functions
 from library.custom_train_functions import (
-    apply_snr_weight,
-    prepare_scheduler_for_custom_training,
-    scale_v_prediction_loss_like_noise_prediction,
     add_v_prediction_like_loss,
     apply_debiased_estimation,
     apply_masked_loss,
+    apply_snr_weight,
+    prepare_scheduler_for_custom_training,
+    scale_v_prediction_loss_like_noise_prediction,
 )
-from library.utils import setup_logging, add_logging_arguments
+from library.utils import add_logging_arguments, setup_logging
+from transformers import CLIPTokenizer
 
 setup_logging()
 import logging
@@ -219,7 +216,7 @@ class TextualInversionTrainer:
                 init_token_ids = tokenizer.encode(args.init_word, add_special_tokens=False)
                 if len(init_token_ids) > 1 and len(init_token_ids) != args.num_vectors_per_token:
                     accelerator.print(
-                        f"token length for init words is not same to num_vectors_per_token, init words is repeated or truncated / "
+                        "token length for init words is not same to num_vectors_per_token, init words is repeated or truncated / "
                         + f"初期化単語のトークン長がnum_vectors_per_tokenと合わないため、繰り返しまたは切り捨てが発生します:  tokenizer {i+1}, length {len(init_token_ids)}"
                     )
                 init_token_ids_list.append(init_token_ids)
@@ -274,7 +271,7 @@ class TextualInversionTrainer:
                 for token_id, embedding in zip(token_ids, embeddings):
                     token_embeds[token_id] = embedding
                     # accelerator.print(token_id, token_embeds[token_id].mean(), token_embeds[token_id].min())
-            accelerator.print(f"weighs loaded")
+            accelerator.print("weighs loaded")
 
         accelerator.print(f"create embeddings for {args.num_vectors_per_token} tokens, for {args.token_string}")
 

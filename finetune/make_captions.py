@@ -1,27 +1,28 @@
 import argparse
-import glob
 import os
-import json
 import random
 import sys
-
 from pathlib import Path
+
+import numpy as np
+import torch
+from library.device_utils import get_preferred_device, init_ipex
 from PIL import Image
 from tqdm import tqdm
-import numpy as np
 
-import torch
-from library.device_utils import init_ipex, get_preferred_device
 init_ipex()
 
 from torchvision import transforms
 from torchvision.transforms.functional import InterpolationMode
+
 sys.path.append(os.path.dirname(__file__))
-from blip.blip import blip_decoder, is_url
 import library.train_util as train_util
+from blip.blip import blip_decoder, is_url
 from library.utils import setup_logging
+
 setup_logging()
 import logging
+
 logger = logging.getLogger(__name__)
 
 DEVICE = get_preferred_device()

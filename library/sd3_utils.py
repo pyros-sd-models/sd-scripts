@@ -1,9 +1,9 @@
-import math
 from typing import Dict, Optional, Union
-import torch
+
 import safetensors
-from safetensors.torch import load_file
+import torch
 from accelerate import init_empty_weights
+from safetensors.torch import load_file
 
 from .utils import setup_logging
 
@@ -12,10 +12,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from library import sd3_models
-
 # TODO move some of functions to model_util.py
-from library import sdxl_model_util
+from library import sd3_models, sdxl_model_util
 
 # region models
 

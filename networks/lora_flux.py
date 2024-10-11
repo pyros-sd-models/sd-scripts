@@ -9,14 +9,12 @@
 
 import math
 import os
-from typing import Dict, List, Optional, Tuple, Type, Union
-from diffusers import AutoencoderKL
-from transformers import CLIPTextModel
-import numpy as np
+from typing import Dict, List, Optional, Type, Union
+
 import torch
-import re
+from diffusers import AutoencoderKL
 from library.utils import setup_logging
-from library.sdxl_original_unet import SdxlUNet2DConditionModel
+from transformers import CLIPTextModel
 
 setup_logging()
 import logging
@@ -469,7 +467,7 @@ def create_network_from_weights(multiplier, file, ae, text_encoders, flux, weigh
     # if unet is an instance of SdxlUNet2DConditionModel or subclass, set is_sdxl to True
     if weights_sd is None:
         if os.path.splitext(file)[1] == ".safetensors":
-            from safetensors.torch import load_file, safe_open
+            from safetensors.torch import load_file
 
             weights_sd = load_file(file)
         else:
@@ -587,7 +585,7 @@ class LoRANetwork(torch.nn.Module):
         self.loraplus_text_encoder_lr_ratio = None
 
         if modules_dim is not None:
-            logger.info(f"create LoRA network from weights")
+            logger.info("create LoRA network from weights")
             self.in_dims = [0] * 5  # create in_dims
             # verbose = True
         else:
@@ -600,11 +598,11 @@ class LoRANetwork(torch.nn.Module):
             #         f"apply LoRA to Conv2d with kernel size (3,3). dim (rank): {self.conv_lora_dim}, alpha: {self.conv_alpha}"
             #     )
         if self.split_qkv:
-            logger.info(f"split qkv for LoRA")
+            logger.info("split qkv for LoRA")
         if self.train_blocks is not None:
             logger.info(f"train {self.train_blocks} blocks only")
         if train_t5xxl:
-            logger.info(f"train T5XXL as well")
+            logger.info("train T5XXL as well")
 
         # create module instances
         def create_modules(
@@ -637,7 +635,7 @@ class LoRANetwork(torch.nn.Module):
                             lora_name = prefix + "." + (name + "." if name else "") + child_name
                             lora_name = lora_name.replace(".", "_")
 
-                            if filter is not None and not filter in lora_name:
+                            if filter is not None and filter not in lora_name:
                                 continue
 
                             dim = None
@@ -951,7 +949,7 @@ class LoRANetwork(torch.nn.Module):
                     sd_for_lora[key[len(lora.lora_name) + 1 :]] = weights_sd[key]
             lora.merge_to(sd_for_lora, dtype, device)
 
-        logger.info(f"weights are merged")
+        logger.info("weights are merged")
 
     def set_loraplus_lr_ratio(self, loraplus_lr_ratio, loraplus_unet_lr_ratio, loraplus_text_encoder_lr_ratio):
         self.loraplus_lr_ratio = loraplus_lr_ratio
@@ -1062,8 +1060,8 @@ class LoRANetwork(torch.nn.Module):
                 state_dict[key] = v
 
         if os.path.splitext(file)[1] == ".safetensors":
-            from safetensors.torch import save_file
             from library import train_util
+            from safetensors.torch import save_file
 
             # Precalculate model hashes to save time on indexing
             if metadata is None:

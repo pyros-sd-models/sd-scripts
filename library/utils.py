@@ -1,18 +1,20 @@
+import json
 import logging
+import struct
 import sys
 import threading
 from typing import *
-import json
-import struct
 
-import torch
-from torchvision import transforms
-from diffusers import EulerAncestralDiscreteScheduler
-import diffusers.schedulers.scheduling_euler_ancestral_discrete
-from diffusers.schedulers.scheduling_euler_ancestral_discrete import EulerAncestralDiscreteSchedulerOutput
 import cv2
-from PIL import Image
+import diffusers.schedulers.scheduling_euler_ancestral_discrete
 import numpy as np
+import torch
+from diffusers import EulerAncestralDiscreteScheduler
+from diffusers.schedulers.scheduling_euler_ancestral_discrete import (
+    EulerAncestralDiscreteSchedulerOutput,
+)
+from PIL import Image
+from torchvision import transforms
 
 
 def fire_in_thread(f, *args, **kwargs):
@@ -59,7 +61,6 @@ def setup_logging(args=None, log_level=None, reset=False):
         handler = None
         if not args or not args.console_log_simple:
             try:
-                from rich.logging import RichHandler
                 from rich.console import Console
                 from rich.logging import RichHandler
 

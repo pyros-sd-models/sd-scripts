@@ -1,10 +1,13 @@
 import os
-from typing import Optional, List, Type
+from typing import List, Optional, Type
+
 import torch
 from library import sdxl_original_unet
 from library.utils import setup_logging
+
 setup_logging()
 import logging
+
 logger = logging.getLogger(__name__)
 
 # input_blocksに適用するかどうか / if True, input_blocks are not applied

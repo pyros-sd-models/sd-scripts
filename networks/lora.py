@@ -5,14 +5,14 @@
 
 import math
 import os
-from typing import Dict, List, Optional, Tuple, Type, Union
-from diffusers import AutoencoderKL
-from transformers import CLIPTextModel
-import numpy as np
-import torch
 import re
-from library.utils import setup_logging
+from typing import Dict, List, Optional, Type, Union
+
+import torch
+from diffusers import AutoencoderKL
 from library.sdxl_original_unet import SdxlUNet2DConditionModel
+from library.utils import setup_logging
+from transformers import CLIPTextModel
 
 setup_logging()
 import logging
@@ -777,7 +777,7 @@ def convert_diffusers_to_sai_if_needed(weights_sd):
     # # add extra conversion
     # unet_conversion_map["up_blocks_1_upsamplers_0"] = "lora_unet_output_blocks_2_2_conv"
 
-    logger.info(f"Converting LoRA keys from Diffusers to SAI")
+    logger.info("Converting LoRA keys from Diffusers to SAI")
     lora_unet_prefix = "lora_unet_"
     for k in list(weights_sd.keys()):
         if not k.startswith(lora_unet_prefix):
@@ -808,7 +808,7 @@ def create_network_from_weights(multiplier, file, vae, text_encoder, unet, weigh
 
     if weights_sd is None:
         if os.path.splitext(file)[1] == ".safetensors":
-            from safetensors.torch import load_file, safe_open
+            from safetensors.torch import load_file
 
             weights_sd = load_file(file)
         else:
@@ -920,9 +920,9 @@ class LoRANetwork(torch.nn.Module):
         self.loraplus_text_encoder_lr_ratio = None
 
         if modules_dim is not None:
-            logger.info(f"create LoRA network from weights")
+            logger.info("create LoRA network from weights")
         elif block_dims is not None:
-            logger.info(f"create LoRA network from block_dims")
+            logger.info("create LoRA network from block_dims")
             logger.info(
                 f"neuron dropout: p={self.dropout}, rank dropout: p={self.rank_dropout}, module dropout: p={self.module_dropout}"
             )
@@ -1027,7 +1027,7 @@ class LoRANetwork(torch.nn.Module):
                 logger.info(f"create LoRA for Text Encoder {index}:")
             else:
                 index = None
-                logger.info(f"create LoRA for Text Encoder:")
+                logger.info("create LoRA for Text Encoder:")
 
             text_encoder_loras, skipped = create_modules(False, index, text_encoder, LoRANetwork.TEXT_ENCODER_TARGET_REPLACE_MODULE)
             self.text_encoder_loras.extend(text_encoder_loras)
@@ -1124,7 +1124,7 @@ class LoRANetwork(torch.nn.Module):
                     sd_for_lora[key[len(lora.lora_name) + 1 :]] = weights_sd[key]
             lora.merge_to(sd_for_lora, dtype, device)
 
-        logger.info(f"weights are merged")
+        logger.info("weights are merged")
 
     # 層別学習率用に層ごとの学習率に対する倍率を定義する　引数の順番が逆だがとりあえず気にしない
     def set_block_lr_weight(self, block_lr_weight: Optional[List[float]]):
@@ -1265,8 +1265,8 @@ class LoRANetwork(torch.nn.Module):
                 state_dict[key] = v
 
         if os.path.splitext(file)[1] == ".safetensors":
-            from safetensors.torch import save_file
             from library import train_util
+            from safetensors.torch import save_file
 
             # Precalculate model hashes to save time on indexing
             if metadata is None:

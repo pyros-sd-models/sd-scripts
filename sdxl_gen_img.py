@@ -1,61 +1,60 @@
-import itertools
-import json
-from typing import Any, List, NamedTuple, Optional, Tuple, Union, Callable
+import argparse
 import glob
 import importlib
 import inspect
-import time
-import zipfile
-from diffusers.utils import deprecate
-from diffusers.configuration_utils import FrozenDict
-import argparse
-import math
+import itertools
 import os
 import random
 import re
+import time
+from typing import Any, Callable, List, NamedTuple, Optional, Tuple, Union
 
 import diffusers
 import numpy as np
-
 import torch
-from library.device_utils import init_ipex, clean_memory, get_preferred_device
+from diffusers.configuration_utils import FrozenDict
+from diffusers.utils import deprecate
+from library.device_utils import clean_memory, get_preferred_device, init_ipex
+
 init_ipex()
 
-import torchvision
-from diffusers import (
-    AutoencoderKL,
-    DDPMScheduler,
-    EulerAncestralDiscreteScheduler,
-    DPMSolverMultistepScheduler,
-    DPMSolverSinglestepScheduler,
-    LMSDiscreteScheduler,
-    PNDMScheduler,
-    DDIMScheduler,
-    EulerDiscreteScheduler,
-    HeunDiscreteScheduler,
-    KDPM2DiscreteScheduler,
-    KDPM2AncestralDiscreteScheduler,
-    # UNet2DConditionModel,
-    StableDiffusionPipeline,
-)
-from einops import rearrange
-from tqdm import tqdm
-from torchvision import transforms
-from transformers import CLIPTextModel, CLIPTokenizer, CLIPVisionModelWithProjection, CLIPImageProcessor
-import PIL
-from PIL import Image
-from PIL.PngImagePlugin import PngInfo
-
 import library.model_util as model_util
-import library.train_util as train_util
 import library.sdxl_model_util as sdxl_model_util
 import library.sdxl_train_util as sdxl_train_util
-from networks.lora import LoRANetwork
-from library.sdxl_original_unet import InferSdxlUNet2DConditionModel
+import library.train_util as train_util
+import PIL
+from diffusers import (
+    AutoencoderKL,
+    DDIMScheduler,
+    DDPMScheduler,
+    DPMSolverMultistepScheduler,
+    DPMSolverSinglestepScheduler,
+    EulerDiscreteScheduler,
+    HeunDiscreteScheduler,
+    KDPM2AncestralDiscreteScheduler,
+    KDPM2DiscreteScheduler,
+    LMSDiscreteScheduler,
+    PNDMScheduler,
+)
+from einops import rearrange
 from library.original_unet import FlashAttentionFunction
+from library.sdxl_original_unet import InferSdxlUNet2DConditionModel
+from library.utils import (
+    EulerAncestralDiscreteSchedulerGL,
+    GradualLatent,
+    add_logging_arguments,
+    setup_logging,
+)
 from networks.control_net_lllite import ControlNetLLLite
-from library.utils import GradualLatent, EulerAncestralDiscreteSchedulerGL
-from library.utils import setup_logging, add_logging_arguments
+from PIL import Image
+from PIL.PngImagePlugin import PngInfo
+from tqdm import tqdm
+from transformers import (
+    CLIPImageProcessor,
+    CLIPTextModel,
+    CLIPTokenizer,
+    CLIPVisionModelWithProjection,
+)
 
 setup_logging()
 import logging
@@ -460,7 +459,7 @@ class PipelineLike:
         do_classifier_free_guidance = guidance_scale > 1.0
 
         if not do_classifier_free_guidance and negative_scale is not None:
-            logger.info(f"negative_scale is ignored if guidance scalle <= 1.0")
+            logger.info("negative_scale is ignored if guidance scalle <= 1.0")
             negative_scale = None
 
         # get unconditional embeddings for classifier free guidance
@@ -1794,7 +1793,7 @@ def main(args):
             control_nets.append((control_net, ratio))
 
     if args.opt_channels_last:
-        logger.info(f"set optimizing: channels last")
+        logger.info("set optimizing: channels last")
         text_encoder1.to(memory_format=torch.channels_last)
         text_encoder2.to(memory_format=torch.channels_last)
         vae.to(memory_format=torch.channels_last)
@@ -1886,10 +1885,10 @@ def main(args):
             logger.info(f"Textual Inversion embeddings `{token_string}` loaded. Tokens are added: {token_ids1} and {token_ids2}")
             assert (
                 min(token_ids1) == token_ids1[0] and token_ids1[-1] == token_ids1[0] + len(token_ids1) - 1
-            ), f"token ids1 is not ordered"
+            ), "token ids1 is not ordered"
             assert (
                 min(token_ids2) == token_ids2[0] and token_ids2[-1] == token_ids2[0] + len(token_ids2) - 1
-            ), f"token ids2 is not ordered"
+            ), "token ids2 is not ordered"
             assert len(tokenizer1) - 1 == token_ids1[-1], f"token ids 1 is not end of tokenize: {len(tokenizer1)}"
             assert len(tokenizer2) - 1 == token_ids2[-1], f"token ids 2 is not end of tokenize: {len(tokenizer2)}"
 
@@ -1973,7 +1972,7 @@ def main(args):
             pipe.clip_vision_model = vision_model
             pipe.clip_vision_processor = processor
             pipe.clip_vision_strength = args.clip_vision_strength
-            logger.info(f"CLIP Vision model loaded.")
+            logger.info("CLIP Vision model loaded.")
 
     else:
         init_images = None
@@ -2765,7 +2764,7 @@ def main(args):
                         height = height - height % 32
                         if width != init_image.size[0] or height != init_image.size[1]:
                             logger.warning(
-                                f"img2img image size is not divisible by 32 so aspect ratio is changed / img2imgの画像サイズが32で割り切れないためリサイズされます。画像が歪みます"
+                                "img2img image size is not divisible by 32 so aspect ratio is changed / img2imgの画像サイズが32で割り切れないためリサイズされます。画像が歪みます"
                             )
 
                 if mask_images is not None:
@@ -2937,7 +2936,7 @@ def setup_parser() -> argparse.ArgumentParser:
             "k_dpm_2",
             "k_dpm_2_a",
         ],
-        help=f"sampler (scheduler) type / サンプラー（スケジューラ）の種類",
+        help="sampler (scheduler) type / サンプラー（スケジューラ）の種類",
     )
     parser.add_argument(
         "--scale",

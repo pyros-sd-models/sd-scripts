@@ -1,15 +1,18 @@
-import math
 import argparse
+import math
 import os
 import time
-import torch
-from safetensors.torch import load_file, save_file
-from library import sai_model_spec, train_util
+
 import library.model_util as model_util
 import lora
+import torch
+from library import sai_model_spec, train_util
 from library.utils import setup_logging
+from safetensors.torch import load_file, save_file
+
 setup_logging()
 import logging
+
 logger = logging.getLogger(__name__)
 
 def load_state_dict(file_name, dtype):
@@ -67,7 +70,7 @@ def merge_to_sd_model(text_encoder, unet, models, ratios, merge_dtype):
         logger.info(f"loading: {model}")
         lora_sd, _ = load_state_dict(model, merge_dtype)
 
-        logger.info(f"merging...")
+        logger.info("merging...")
         for key in lora_sd.keys():
             if "lora_down" in key:
                 up_key = key.replace("lora_down", "lora_up")
@@ -157,7 +160,7 @@ def merge_lora_models(models, ratios, merge_dtype, concat=False, shuffle=False):
         logger.info(f"dim: {list(set(dims.values()))}, alpha: {list(set(alphas.values()))}")
 
         # merge
-        logger.info(f"merging...")
+        logger.info("merging...")
         for key in lora_sd.keys():
             if "alpha" in key:
                 continue
@@ -179,7 +182,7 @@ def merge_lora_models(models, ratios, merge_dtype, concat=False, shuffle=False):
             if key in merged_sd:
                 assert (
                     merged_sd[key].size() == lora_sd[key].size() or concat_dim is not None
-                ), f"weights shape mismatch merging v1 and v2, different dims? / 重みのサイズが合いません。v1とv2、または次元数の異なるモデルはマージできません"
+                ), "weights shape mismatch merging v1 and v2, different dims? / 重みのサイズが合いません。v1とv2、または次元数の異なるモデルはマージできません"
                 if concat_dim is not None:
                     merged_sd[key] = torch.cat([merged_sd[key], lora_sd[key] * scale], dim=concat_dim)
                 else:
@@ -225,7 +228,7 @@ def merge_lora_models(models, ratios, merge_dtype, concat=False, shuffle=False):
 
 
 def merge(args):
-    assert len(args.models) == len(args.ratios), f"number of models must be equal to number of ratios / モデルの数と重みの数は合わせてください"
+    assert len(args.models) == len(args.ratios), "number of models must be equal to number of ratios / モデルの数と重みの数は合わせてください"
 
     def str_to_dtype(p):
         if p == "float":
@@ -278,7 +281,7 @@ def merge(args):
     else:
         state_dict, metadata, v2 = merge_lora_models(args.models, args.ratios, merge_dtype, args.concat, args.shuffle)
 
-        logger.info(f"calculating hashes and creating metadata...")
+        logger.info("calculating hashes and creating metadata...")
 
         model_hash, legacy_hash = train_util.precalculate_safetensors_hashes(state_dict, metadata)
         metadata["sshs_model_hash"] = model_hash

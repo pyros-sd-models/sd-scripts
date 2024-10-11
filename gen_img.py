@@ -1,67 +1,70 @@
-import itertools
-import json
-from typing import Any, List, NamedTuple, Optional, Tuple, Union, Callable
+import argparse
 import glob
 import importlib
 import importlib.util
-import sys
 import inspect
-import time
-import zipfile
-from diffusers.utils import deprecate
-from diffusers.configuration_utils import FrozenDict
-import argparse
-import math
+import itertools
 import os
 import random
 import re
+import sys
+import time
+from typing import Any, Callable, List, NamedTuple, Optional, Tuple, Union
 
 import diffusers
 import numpy as np
 import torch
-
-from library.device_utils import init_ipex, clean_memory, get_preferred_device
+from diffusers.configuration_utils import FrozenDict
+from diffusers.utils import deprecate
+from library.device_utils import init_ipex
 
 init_ipex()
 
-import torchvision
+import library.model_util as model_util
+import library.sdxl_model_util as sdxl_model_util
+import library.sdxl_train_util as sdxl_train_util
+import library.train_util as train_util
+import PIL
+import tools.original_control_net as original_control_net
 from diffusers import (
     AutoencoderKL,
+    DDIMScheduler,
     DDPMScheduler,
-    EulerAncestralDiscreteScheduler,
     DPMSolverMultistepScheduler,
     DPMSolverSinglestepScheduler,
-    LMSDiscreteScheduler,
-    PNDMScheduler,
-    DDIMScheduler,
     EulerDiscreteScheduler,
     HeunDiscreteScheduler,
-    KDPM2DiscreteScheduler,
     KDPM2AncestralDiscreteScheduler,
+    KDPM2DiscreteScheduler,
+    LMSDiscreteScheduler,
+    PNDMScheduler,
     # UNet2DConditionModel,
     StableDiffusionPipeline,
 )
 from einops import rearrange
-from tqdm import tqdm
-from torchvision import transforms
-from transformers import CLIPTextModel, CLIPTokenizer, CLIPVisionModelWithProjection, CLIPImageProcessor
-import PIL
+from library.original_unet import (
+    FlashAttentionFunction,
+    InferUNet2DConditionModel,
+    UNet2DConditionModel,
+)
+from library.sdxl_original_unet import InferSdxlUNet2DConditionModel
+from library.utils import (
+    EulerAncestralDiscreteSchedulerGL,
+    GradualLatent,
+    add_logging_arguments,
+    setup_logging,
+)
+from networks.control_net_lllite import ControlNetLLLite
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
-
-import library.model_util as model_util
-import library.train_util as train_util
-import library.sdxl_model_util as sdxl_model_util
-import library.sdxl_train_util as sdxl_train_util
-from networks.lora import LoRANetwork
-import tools.original_control_net as original_control_net
 from tools.original_control_net import ControlNetInfo
-from library.original_unet import UNet2DConditionModel, InferUNet2DConditionModel
-from library.sdxl_original_unet import InferSdxlUNet2DConditionModel
-from library.original_unet import FlashAttentionFunction
-from networks.control_net_lllite import ControlNetLLLite
-from library.utils import GradualLatent, EulerAncestralDiscreteSchedulerGL
-from library.utils import setup_logging, add_logging_arguments
+from tqdm import tqdm
+from transformers import (
+    CLIPImageProcessor,
+    CLIPTextModel,
+    CLIPTokenizer,
+    CLIPVisionModelWithProjection,
+)
 
 setup_logging()
 import logging
@@ -474,7 +477,7 @@ class PipelineLike:
         do_classifier_free_guidance = guidance_scale > 1.0
 
         if not do_classifier_free_guidance and negative_scale is not None:
-            logger.warning(f"negative_scale is ignored if guidance scalle <= 1.0")
+            logger.warning("negative_scale is ignored if guidance scalle <= 1.0")
             negative_scale = None
 
         # get unconditional embeddings for classifier free guidance
@@ -1875,7 +1878,7 @@ def main(args):
     ), "ControlNet and ControlNet-LLLite cannot be used at the same time"
 
     if args.opt_channels_last:
-        logger.info(f"set optimizing: channels last")
+        logger.info("set optimizing: channels last")
         for text_encoder in text_encoders:
             text_encoder.to(memory_format=torch.channels_last)
         vae.to(memory_format=torch.channels_last)
@@ -1976,10 +1979,10 @@ def main(args):
             logger.info(f"Textual Inversion embeddings `{token_string}` loaded. Tokens are added: {token_ids1} and {token_ids2}")
             assert (
                 min(token_ids1) == token_ids1[0] and token_ids1[-1] == token_ids1[0] + len(token_ids1) - 1
-            ), f"token ids1 is not ordered"
+            ), "token ids1 is not ordered"
             assert not is_sdxl or (
                 min(token_ids2) == token_ids2[0] and token_ids2[-1] == token_ids2[0] + len(token_ids2) - 1
-            ), f"token ids2 is not ordered"
+            ), "token ids2 is not ordered"
             assert len(tokenizers[0]) - 1 == token_ids1[-1], f"token ids 1 is not end of tokenize: {len(tokenizers[0])}"
             assert (
                 not is_sdxl or len(tokenizers[1]) - 1 == token_ids2[-1]
@@ -2089,7 +2092,7 @@ def main(args):
             pipe.clip_vision_model = vision_model
             pipe.clip_vision_processor = processor
             pipe.clip_vision_strength = args.clip_vision_strength
-            logger.info(f"CLIP Vision model loaded.")
+            logger.info("CLIP Vision model loaded.")
 
     else:
         init_images = None
@@ -2865,7 +2868,7 @@ def main(args):
                         height = height - height % 32
                         if width != init_image.size[0] or height != init_image.size[1]:
                             logger.warning(
-                                f"img2img image size is not divisible by 32 so aspect ratio is changed / img2imgの画像サイズが32で割り切れないためリサイズされます。画像が歪みます"
+                                "img2img image size is not divisible by 32 so aspect ratio is changed / img2imgの画像サイズが32で割り切れないためリサイズされます。画像が歪みます"
                             )
 
                 if mask_images is not None:
@@ -3068,7 +3071,7 @@ def setup_parser() -> argparse.ArgumentParser:
             "k_dpm_2",
             "k_dpm_2_a",
         ],
-        help=f"sampler (scheduler) type / サンプラー（スケジューラ）の種類",
+        help="sampler (scheduler) type / サンプラー（スケジューラ）の種類",
     )
     parser.add_argument(
         "--scale",

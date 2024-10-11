@@ -2,15 +2,16 @@
 # (c) 2022 Kohya S. @kohya_ss
 
 import argparse
-import glob
-import os
 import json
+import os
 import re
 
-from tqdm import tqdm
 from library.utils import setup_logging
+from tqdm import tqdm
+
 setup_logging()
 import logging
+
 logger = logging.getLogger(__name__)
 
 PATTERN_HAIR_LENGTH = re.compile(r', (long|short|medium) hair, ')

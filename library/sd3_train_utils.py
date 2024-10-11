@@ -1,19 +1,19 @@
 import argparse
+import json
 import math
 import os
-import toml
-import json
 import time
 from typing import Dict, List, Optional, Tuple, Union
 
+import toml
 import torch
-from safetensors.torch import save_file
 from accelerate import Accelerator, PartialState
-from tqdm import tqdm
 from PIL import Image
+from safetensors.torch import save_file
+from tqdm import tqdm
 
 from library import sd3_models, sd3_utils, strategy_base, train_util
-from library.device_utils import init_ipex, clean_memory_on_device
+from library.device_utils import clean_memory_on_device, init_ipex
 
 init_ipex()
 
@@ -28,7 +28,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from .sdxl_train_util import match_mixed_precision
 
 
 def load_target_model(
@@ -627,11 +626,10 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 import torch
-
 from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.schedulers.scheduling_utils import SchedulerMixin
-from diffusers.utils.torch_utils import randn_tensor
 from diffusers.utils import BaseOutput
+from diffusers.utils.torch_utils import randn_tensor
 
 
 @dataclass

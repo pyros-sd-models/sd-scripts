@@ -1,45 +1,43 @@
-import importlib
 import argparse
+import importlib
+import json
 import math
 import os
-import sys
 import random
+import sys
 import time
-import json
 from multiprocessing import Value
 from typing import Any, List
+
 import toml
-
-from tqdm import tqdm
-
 import torch
-from library.device_utils import init_ipex, clean_memory_on_device
+from library.device_utils import clean_memory_on_device, init_ipex
+from tqdm import tqdm
 
 init_ipex()
 
+import library.config_util as config_util
+import library.custom_train_functions as custom_train_functions
+import library.huggingface_util as huggingface_util
+import library.train_util as train_util
 from accelerate.utils import set_seed
 from diffusers import DDPMScheduler
 from library import deepspeed_utils, model_util, strategy_base, strategy_sd
-
-import library.train_util as train_util
-from library.train_util import DreamBoothDataset
-import library.config_util as config_util
 from library.config_util import (
-    ConfigSanitizer,
     BlueprintGenerator,
+    ConfigSanitizer,
 )
-import library.huggingface_util as huggingface_util
-import library.custom_train_functions as custom_train_functions
 from library.custom_train_functions import (
+    add_v_prediction_like_loss,
+    apply_debiased_estimation,
+    apply_masked_loss,
     apply_snr_weight,
     get_weighted_text_embeddings,
     prepare_scheduler_for_custom_training,
     scale_v_prediction_loss_like_noise_prediction,
-    add_v_prediction_like_loss,
-    apply_debiased_estimation,
-    apply_masked_loss,
 )
-from library.utils import setup_logging, add_logging_arguments
+from library.train_util import DreamBoothDataset
+from library.utils import add_logging_arguments, setup_logging
 
 setup_logging()
 import logging
@@ -487,7 +485,7 @@ class NetworkTrainer:
             else:
                 trainable_params = results
                 lr_descriptions = None
-        except TypeError as e:
+        except TypeError:
             trainable_params = network.prepare_optimizer_params(text_encoder_lr, args.unet_lr)
             lr_descriptions = None
 
@@ -971,7 +969,7 @@ class NetworkTrainer:
                 # if skip_until_initial_step is specified, load data and discard it to ensure the same data is used
                 if not args.resume:
                     logger.info(
-                        f"initial_step is specified but not resuming. lr scheduler will be started from the beginning / initial_stepが指定されていますがresumeしていないため、lr schedulerは最初から始まります"
+                        "initial_step is specified but not resuming. lr scheduler will be started from the beginning / initial_stepが指定されていますがresumeしていないため、lr schedulerは最初から始まります"
                     )
                 logger.info(f"skipping {initial_step} steps / {initial_step}ステップをスキップします")
                 initial_step *= args.gradient_accumulation_steps

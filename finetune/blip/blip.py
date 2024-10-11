@@ -6,24 +6,25 @@
  * By Junnan Li
 '''
 import warnings
+
 warnings.filterwarnings("ignore")
 
 # from models.vit import VisionTransformer, interpolate_pos_embed
 # from models.med import BertConfig, BertModel, BertLMHeadModel
-from blip.vit import VisionTransformer, interpolate_pos_embed
-from blip.med import BertConfig, BertModel, BertLMHeadModel
-from transformers import BertTokenizer
-
-import torch
-from torch import nn
-import torch.nn.functional as F
-
 import os
 from urllib.parse import urlparse
-from timm.models.hub import download_cached_file
+
+import torch
+from blip.med import BertConfig, BertLMHeadModel, BertModel
+from blip.vit import VisionTransformer, interpolate_pos_embed
 from library.utils import setup_logging
+from timm.models.hub import download_cached_file
+from torch import nn
+from transformers import BertTokenizer
+
 setup_logging()
 import logging
+
 logger = logging.getLogger(__name__)
 
 class BLIP_Base(nn.Module):

@@ -24,12 +24,14 @@
 
 import math
 from types import SimpleNamespace
-from typing import Any, Optional
+from typing import Optional
+
 import torch
 import torch.utils.checkpoint
+from einops import rearrange
 from torch import nn
 from torch.nn import functional as F
-from einops import rearrange
+
 from .utils import setup_logging
 
 setup_logging()

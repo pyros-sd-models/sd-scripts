@@ -4,13 +4,12 @@ import json
 import os
 import re
 import time
+
 import torch
+from library import sai_model_spec, train_util
+from library.utils import setup_logging
 from safetensors.torch import load_file, save_file
 from tqdm import tqdm
-from library import sai_model_spec, train_util
-import library.model_util as model_util
-import lora
-from library.utils import setup_logging
 
 setup_logging()
 import logging
@@ -233,15 +232,15 @@ def format_lbws(lbws):
         # lbwは"[1,1,1,1,1,1,1,1,1,1,1,1]"のような文字列で与えられることを期待している
         lbws = [json.loads(lbw) for lbw in lbws]
     except Exception:
-        raise ValueError(f"format of lbws are must be json / 層別適用率はJSON形式で書いてください")
-    assert all(isinstance(lbw, list) for lbw in lbws), f"lbws are must be list / 層別適用率はリストにしてください"
+        raise ValueError("format of lbws are must be json / 層別適用率はJSON形式で書いてください")
+    assert all(isinstance(lbw, list) for lbw in lbws), "lbws are must be list / 層別適用率はリストにしてください"
     assert len(set(len(lbw) for lbw in lbws)) == 1, "all lbws should have the same length  / 層別適用率は同じ長さにしてください"
     assert all(
         len(lbw) in ACCEPTABLE for lbw in lbws
     ), f"length of lbw are must be in {ACCEPTABLE} / 層別適用率の長さは{ACCEPTABLE}のいずれかにしてください"
     assert all(
         all(isinstance(weight, (int, float)) for weight in lbw) for lbw in lbws
-    ), f"values of lbs are must be numbers / 層別適用率の値はすべて数値にしてください"
+    ), "values of lbs are must be numbers / 層別適用率の値はすべて数値にしてください"
 
     layer_num = len(lbws[0])
     is_sdxl = True if layer_num in SDXL_LAYER_NUM else False
@@ -284,7 +283,7 @@ def merge_lora_models(models, ratios, lbws, new_rank, new_conv_rank, device, mer
             logger.info(f"lbw: {dict(zip(LAYER26.keys(), lbw_weights))}")
 
         # merge
-        logger.info(f"merging...")
+        logger.info("merging...")
         for key in tqdm(list(lora_sd.keys())):
             if "lora_down" not in key:
                 continue
@@ -403,11 +402,11 @@ def merge_lora_models(models, ratios, lbws, new_rank, new_conv_rank, device, mer
 def merge(args):
     assert len(args.models) == len(
         args.ratios
-    ), f"number of models must be equal to number of ratios / モデルの数と重みの数は合わせてください"
+    ), "number of models must be equal to number of ratios / モデルの数と重みの数は合わせてください"
     if args.lbws:
         assert len(args.models) == len(
             args.lbws
-        ), f"number of models must be equal to number of ratios / モデルの数と層別適用率の数は合わせてください"
+        ), "number of models must be equal to number of ratios / モデルの数と層別適用率の数は合わせてください"
     else:
         args.lbws = []  # zip_longestで扱えるようにlbws未使用時には空のリストにしておく
 
@@ -430,7 +429,7 @@ def merge(args):
         args.models, args.ratios, args.lbws, args.new_rank, new_conv_rank, args.device, merge_dtype
     )
 
-    logger.info(f"calculating hashes and creating metadata...")
+    logger.info("calculating hashes and creating metadata...")
 
     model_hash, legacy_hash = train_util.precalculate_safetensors_hashes(state_dict, metadata)
     metadata["sshs_model_hash"] = model_hash

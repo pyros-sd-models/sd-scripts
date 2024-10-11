@@ -3,11 +3,10 @@
 
 # and some module/classes are contributed from KohakuBlueleaf. Thanks for the contribution!
 
-from ast import Tuple
-from functools import partial
 import math
-from types import SimpleNamespace
+from functools import partial
 from typing import Dict, List, Optional, Union
+
 import einops
 import numpy as np
 import torch
@@ -15,6 +14,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.checkpoint import checkpoint
 from transformers import CLIPTokenizer, T5TokenizerFast
+
 from .utils import setup_logging
 
 setup_logging()
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 memory_efficient_attention = None
 try:
-    import xformers
+    pass
 except:
     pass
 

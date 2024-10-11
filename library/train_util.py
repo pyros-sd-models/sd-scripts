@@ -50,6 +50,7 @@ from library.strategy_base import (
 
 init_ipex()
 
+
 import cv2
 import imagesize
 import numpy as np
@@ -78,7 +79,6 @@ from diffusers.optimization import (
 )
 from huggingface_hub import hf_hub_download
 from PIL import Image
-from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import Optimizer
 from torchvision import transforms
 from transformers import CLIPTextModel, CLIPTextModelWithProjection, CLIPTokenizer
@@ -94,12 +94,10 @@ from library.original_unet import UNet2DConditionModel
 from library.utils import pil_resize, setup_logging
 
 setup_logging()
-import logging
 
 logger = logging.getLogger(__name__)
 # from library.attention_processors import FlashAttnProcessor
 # from library.hypernetwork import replace_attentions_for_hypernetwork
-from library.original_unet import UNet2DConditionModel
 
 HIGH_VRAM = False
 
@@ -132,7 +130,6 @@ IMAGE_EXTENSIONS = [
 ]
 
 try:
-    import pillow_avif
 
     IMAGE_EXTENSIONS.extend([".avif", ".AVIF"])
 except:
@@ -140,7 +137,6 @@ except:
 
 # JPEG-XL on Linux
 try:
-    from jxlpy import JXLImagePlugin
 
     IMAGE_EXTENSIONS.extend([".jxl", ".JXL"])
 except:
@@ -148,7 +144,6 @@ except:
 
 # JPEG-XL on Windows
 try:
-    import pillow_jxl
 
     IMAGE_EXTENSIONS.extend([".jxl", ".JXL"])
 except:
@@ -767,10 +762,10 @@ class BaseDataset(torch.utils.data.Dataset):
 
         assert (
             min(resolution) >= min_bucket_reso
-        ), f"min_bucket_reso must be equal or less than resolution / min_bucket_resoは最小解像度より大きくできません。解像度を大きくするかmin_bucket_resoを小さくしてください"
+        ), "min_bucket_reso must be equal or less than resolution / min_bucket_resoは最小解像度より大きくできません。解像度を大きくするかmin_bucket_resoを小さくしてください"
         assert (
             max(resolution) <= max_bucket_reso
-        ), f"max_bucket_reso must be equal or greater than resolution / max_bucket_resoは最大解像度より小さくできません。解像度を小さくするかmin_bucket_resoを大きくしてください"
+        ), "max_bucket_reso must be equal or greater than resolution / max_bucket_resoは最大解像度より小さくできません。解像度を小さくするかmin_bucket_resoを大きくしてください"
 
         return min_bucket_reso, max_bucket_reso
 
@@ -2046,7 +2041,7 @@ class DreamBoothDataset(BaseDataset):
 
         assert (
             resolution is not None
-        ), f"resolution is required / resolution（解像度）指定は必須です"
+        ), "resolution is required / resolution（解像度）指定は必須です"
 
         self.batch_size = batch_size
         self.size = min(self.width, self.height)  # 短いほう
@@ -2116,7 +2111,7 @@ class DreamBoothDataset(BaseDataset):
                 )
                 if not os.path.isfile(info_cache_file):
                     logger.warning(
-                        f"image info file not found. You can ignore this warning if this is the first time to use this subset"
+                        "image info file not found. You can ignore this warning if this is the first time to use this subset"
                         + " / キャッシュファイルが見つかりませんでした。初回実行時はこの警告を無視してください: {metadata_file}"
                     )
                     use_cached_info_for_subset = False
@@ -2447,12 +2442,12 @@ class FineTuningDataset(BaseDataset):
             if not npz_any:
                 use_npz_latents = False
                 logger.warning(
-                    f"npz file does not exist. ignore npz files / npzファイルが見つからないためnpzファイルを無視します"
+                    "npz file does not exist. ignore npz files / npzファイルが見つからないためnpzファイルを無視します"
                 )
             elif not npz_all:
                 use_npz_latents = False
                 logger.warning(
-                    f"some of npz file does not exist. ignore npz files / いくつかのnpzファイルが見つからないためnpzファイルを無視します"
+                    "some of npz file does not exist. ignore npz files / いくつかのnpzファイルが見つからないためnpzファイルを無視します"
                 )
                 if flip_aug_in_subset:
                     logger.warning(
@@ -2476,7 +2471,7 @@ class FineTuningDataset(BaseDataset):
             if use_npz_latents:
                 use_npz_latents = False
                 logger.warning(
-                    f"npz files exist, but no bucket info in metadata. ignore npz files / メタデータにbucket情報がないためnpzファイルを無視します"
+                    "npz files exist, but no bucket info in metadata. ignore npz files / メタデータにbucket情報がないためnpzファイルを無視します"
                 )
 
             assert (
@@ -2988,7 +2983,7 @@ def debug_dataset(train_dataset, show_input_ids=False):
 
     epoch = 1
     while True:
-        logger.info(f"")
+        logger.info("")
         logger.info(f"epoch: {epoch}")
 
         steps = (epoch - 1) * len(train_dataset) + 1
@@ -4466,7 +4461,7 @@ def add_training_arguments(parser: argparse.ArgumentParser, support_dreambooth: 
             "k_dpm_2",
             "k_dpm_2_a",
         ],
-        help=f"sampler (scheduler) type for sample images / サンプル出力時のサンプラー（スケジューラ）の種類",
+        help="sampler (scheduler) type for sample images / サンプル出力時のサンプラー（スケジューラ）の種類",
     )
 
     parser.add_argument(
@@ -4623,8 +4618,8 @@ def verify_command_line_training_args(args: argparse.Namespace):
 
     if getattr(args, "config_file", None) is not None:
         logger.info(
-            f"wandb is enabled, but option `config_file` is included in the command line. Because the command line is exposed to the public, please be careful about the information included in the path."
-            + f" / wandbが有効で、かつオプション `config_file` がコマンドラインに含まれています。コマンドラインは公開されるため、パスに含まれる情報にご注意ください。"
+            "wandb is enabled, but option `config_file` is included in the command line. Because the command line is exposed to the public, please be careful about the information included in the path."
+            + " / wandbが有効で、かつオプション `config_file` がコマンドラインに含まれています。コマンドラインは公開されるため、パスに含まれる情報にご注意ください。"
         )
 
     # other sensitive options
@@ -4633,8 +4628,8 @@ def verify_command_line_training_args(args: argparse.Namespace):
         and args.huggingface_repo_visibility != "public"
     ):
         logger.info(
-            f"wandb is enabled, but option huggingface_repo_id is included in the command line and huggingface_repo_visibility is not 'public'. Because the command line is exposed to the public, it is recommended to move it to the `.toml` file."
-            + f" / wandbが有効で、かつオプション huggingface_repo_id がコマンドラインに含まれており、huggingface_repo_visibility が 'public' ではありません。コマンドラインは公開されるため、`.toml`ファイルに移動することをお勧めします。"
+            "wandb is enabled, but option huggingface_repo_id is included in the command line and huggingface_repo_visibility is not 'public'. Because the command line is exposed to the public, it is recommended to move it to the `.toml` file."
+            + " / wandbが有効で、かつオプション huggingface_repo_id がコマンドラインに含まれており、huggingface_repo_visibility が 'public' ではありません。コマンドラインは公開されるため、`.toml`ファイルに移動することをお勧めします。"
         )
 
 
@@ -4693,7 +4688,7 @@ def verify_training_args(args: argparse.Namespace):
 
     if args.zero_terminal_snr and not args.v_parameterization:
         logger.warning(
-            f"zero_terminal_snr is enabled, but v_parameterization is not enabled. training will be unexpected"
+            "zero_terminal_snr is enabled, but v_parameterization is not enabled. training will be unexpected"
             + " / zero_terminal_snrが有効ですが、v_parameterizationが有効ではありません。学習結果は想定外になる可能性があります"
         )
 
@@ -5175,7 +5170,7 @@ def get_optimizer(args, trainable_params):
             logger.info(f"use 8-bit SGD with Nesterov optimizer | {optimizer_kwargs}")
             if "momentum" not in optimizer_kwargs:
                 logger.warning(
-                    f"8-bit SGD with Nesterov must be with momentum, set momentum to 0.9 / 8-bit SGD with Nesterovはmomentum指定が必須のため0.9に設定します"
+                    "8-bit SGD with Nesterov must be with momentum, set momentum to 0.9 / 8-bit SGD with Nesterovはmomentum指定が必須のため0.9に設定します"
                 )
                 optimizer_kwargs["momentum"] = 0.9
 
@@ -5248,7 +5243,7 @@ def get_optimizer(args, trainable_params):
         logger.info(f"use SGD with Nesterov optimizer | {optimizer_kwargs}")
         if "momentum" not in optimizer_kwargs:
             logger.info(
-                f"SGD with Nesterov must be with momentum, set momentum to 0.9 / SGD with Nesterovはmomentum指定が必須のため0.9に設定します"
+                "SGD with Nesterov must be with momentum, set momentum to 0.9 / SGD with Nesterovはmomentum指定が必須のため0.9に設定します"
             )
             optimizer_kwargs["momentum"] = 0.9
 
@@ -5345,16 +5340,16 @@ def get_optimizer(args, trainable_params):
             "warmup_init", False
         ):
             logger.info(
-                f"set relative_step to True because warmup_init is True / warmup_initがTrueのためrelative_stepをTrueにします"
+                "set relative_step to True because warmup_init is True / warmup_initがTrueのためrelative_stepをTrueにします"
             )
             optimizer_kwargs["relative_step"] = True
         logger.info(f"use Adafactor optimizer | {optimizer_kwargs}")
 
         if optimizer_kwargs["relative_step"]:
-            logger.info(f"relative_step is true / relative_stepがtrueです")
+            logger.info("relative_step is true / relative_stepがtrueです")
             if lr != 0.0:
                 logger.warning(
-                    f"learning rate is used as initial_lr / 指定したlearning rateはinitial_lrとして使用されます"
+                    "learning rate is used as initial_lr / 指定したlearning rateはinitial_lrとして使用されます"
                 )
             args.learning_rate = None
 
@@ -5368,14 +5363,14 @@ def get_optimizer(args, trainable_params):
                 if has_group_lr:
                     # 一応argsを無効にしておく TODO 依存関係が逆転してるのであまり望ましくない
                     logger.warning(
-                        f"unet_lr and text_encoder_lr are ignored / unet_lrとtext_encoder_lrは無視されます"
+                        "unet_lr and text_encoder_lr are ignored / unet_lrとtext_encoder_lrは無視されます"
                     )
                     args.unet_lr = None
                     args.text_encoder_lr = None
 
             if args.lr_scheduler != "adafactor":
                 logger.info(
-                    f"use adafactor_scheduler / スケジューラにadafactor_schedulerを使用します"
+                    "use adafactor_scheduler / スケジューラにadafactor_schedulerを使用します"
                 )
             args.lr_scheduler = f"adafactor:{lr}"  # ちょっと微妙だけど
 
@@ -5383,15 +5378,15 @@ def get_optimizer(args, trainable_params):
         else:
             if args.max_grad_norm != 0.0:
                 logger.warning(
-                    f"because max_grad_norm is set, clip_grad_norm is enabled. consider set to 0 / max_grad_normが設定されているためclip_grad_normが有効になります。0に設定して無効にしたほうがいいかもしれません"
+                    "because max_grad_norm is set, clip_grad_norm is enabled. consider set to 0 / max_grad_normが設定されているためclip_grad_normが有効になります。0に設定して無効にしたほうがいいかもしれません"
                 )
             if args.lr_scheduler != "constant_with_warmup":
                 logger.warning(
-                    f"constant_with_warmup will be good / スケジューラはconstant_with_warmupが良いかもしれません"
+                    "constant_with_warmup will be good / スケジューラはconstant_with_warmupが良いかもしれません"
                 )
             if optimizer_kwargs.get("clip_threshold", 1.0) != 1.0:
                 logger.warning(
-                    f"clip_threshold=1.0 will be good / clip_thresholdは1.0が良いかもしれません"
+                    "clip_threshold=1.0 will be good / clip_thresholdは1.0が良いかもしれません"
                 )
 
         optimizer_class = transformers.optimization.Adafactor
@@ -5624,7 +5619,7 @@ def get_scheduler_fix(args, optimizer: Optimizer, num_processes: int):
     if name.startswith("adafactor"):
         assert (
             type(optimizer) == transformers.optimization.Adafactor
-        ), f"adafactor scheduler must be used with Adafactor optimizer / adafactor schedulerはAdafactorオプティマイザと同時に使ってください"
+        ), "adafactor scheduler must be used with Adafactor optimizer / adafactor schedulerはAdafactorオプティマイザと同時に使ってください"
         initial_lr = float(name.split(":")[1])
         # logger.info(f"adafactor scheduler init lr {initial_lr}")
         return wrap_check_needless_num_warmup_steps(
@@ -5762,7 +5757,7 @@ def prepare_dataset_args(args: argparse.Namespace, support_metadata: bool):
     if support_metadata:
         if args.in_json is not None and (args.color_aug or args.random_crop):
             logger.warning(
-                f"latents in npz is ignored when color_aug or random_crop is True / color_augまたはrandom_cropを有効にした場合、npzファイルのlatentsは無視されます"
+                "latents in npz is ignored when color_aug or random_crop is True / color_augまたはrandom_cropを有効にした場合、npzファイルのlatentsは無視されます"
             )
 
 

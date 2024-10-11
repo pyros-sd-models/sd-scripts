@@ -5,17 +5,26 @@ import math
 import os
 
 import torch
+
 from library.device_utils import init_ipex
+
 init_ipex()
 
 import diffusers
-from transformers import CLIPTextModel, CLIPTokenizer, CLIPTextConfig, logging
-from diffusers import AutoencoderKL, DDIMScheduler, StableDiffusionPipeline  # , UNet2DConditionModel
+from diffusers import (  # , UNet2DConditionModel
+    AutoencoderKL,
+    DDIMScheduler,
+    StableDiffusionPipeline,
+)
 from safetensors.torch import load_file, save_file
+from transformers import CLIPTextConfig, CLIPTextModel, CLIPTokenizer, logging
+
 from library.original_unet import UNet2DConditionModel
 from library.utils import setup_logging
+
 setup_logging()
 import logging
+
 logger = logging.getLogger(__name__)
 
 # DiffUsers版StableDiffusionのモデルパラメータ

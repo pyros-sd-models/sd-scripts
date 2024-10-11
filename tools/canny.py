@@ -1,8 +1,9 @@
 import argparse
-import cv2
-
 import logging
+
+import cv2
 from library.utils import setup_logging
+
 setup_logging()
 logger = logging.getLogger(__name__)
 

@@ -1,10 +1,12 @@
 # based on https://github.com/Stability-AI/ModelSpec
 import datetime
 import hashlib
-from io import BytesIO
 import os
+from io import BytesIO
 from typing import List, Optional, Tuple, Union
+
 import safetensors
+
 from library.utils import setup_logging
 
 setup_logging()

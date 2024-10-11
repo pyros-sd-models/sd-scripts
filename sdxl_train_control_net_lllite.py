@@ -2,58 +2,48 @@
 # training code for ControlNet-LLLite with passing cond_image to U-Net's forward
 
 import argparse
-import json
 import math
 import os
 import random
-import time
 from multiprocessing import Value
-from types import SimpleNamespace
+
 import toml
-
-from tqdm import tqdm
-
 import torch
-from library.device_utils import init_ipex, clean_memory_on_device
+from library.device_utils import clean_memory_on_device, init_ipex
+from tqdm import tqdm
 
 init_ipex()
 
-from torch.nn.parallel import DistributedDataParallel as DDP
-from accelerate.utils import set_seed
 import accelerate
-from diffusers import DDPMScheduler, ControlNetModel
-from safetensors.torch import load_file
+import library.config_util as config_util
+import library.custom_train_functions as custom_train_functions
+import library.huggingface_util as huggingface_util
+import library.train_util as train_util
+import networks.control_net_lllite_for_train as control_net_lllite_for_train
+from accelerate.utils import set_seed
+from diffusers import DDPMScheduler
 from library import (
     deepspeed_utils,
     sai_model_spec,
     sdxl_model_util,
-    sdxl_original_unet,
     sdxl_train_util,
     strategy_base,
     strategy_sd,
     strategy_sdxl,
 )
-
-import library.model_util as model_util
-import library.train_util as train_util
-import library.config_util as config_util
 from library.config_util import (
-    ConfigSanitizer,
     BlueprintGenerator,
+    ConfigSanitizer,
 )
-import library.huggingface_util as huggingface_util
-import library.custom_train_functions as custom_train_functions
 from library.custom_train_functions import (
     add_v_prediction_like_loss,
+    apply_debiased_estimation,
     apply_snr_weight,
     prepare_scheduler_for_custom_training,
-    pyramid_noise_like,
-    apply_noise_offset,
     scale_v_prediction_loss_like_noise_prediction,
-    apply_debiased_estimation,
 )
-import networks.control_net_lllite_for_train as control_net_lllite_for_train
-from library.utils import setup_logging, add_logging_arguments
+from library.utils import add_logging_arguments, setup_logging
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 setup_logging()
 import logging
@@ -210,7 +200,7 @@ def train(args):
     control_net_lllite_for_train.replace_unet_linear_and_conv2d()
 
     if args.network_weights is not None:
-        accelerator.print(f"initialize U-Net with ControlNet-LLLite")
+        accelerator.print("initialize U-Net with ControlNet-LLLite")
         with accelerate.init_empty_weights():
             unet_lllite = control_net_lllite_for_train.SdxlUNet2DConditionModelControlNetLLLite()
         unet_lllite.to(accelerator.device, dtype=weight_dtype)
@@ -225,7 +215,7 @@ def train(args):
         unet_sd = unet.state_dict()
 
         # init LLLite weights
-        accelerator.print(f"initialize U-Net with ControlNet-LLLite")
+        accelerator.print("initialize U-Net with ControlNet-LLLite")
 
         if args.lowram:
             with accelerate.init_on_device(accelerator.device):

@@ -1,17 +1,16 @@
 import json
 import os
 from typing import List, Optional, Tuple, Union
+
 import einops
 import torch
-
-from safetensors.torch import load_file
-from safetensors import safe_open
 from accelerate import init_empty_weights
-from transformers import CLIPTextModel, CLIPConfig, T5EncoderModel, T5Config
+from safetensors import safe_open
+from safetensors.torch import load_file
+from transformers import CLIPConfig, CLIPTextModel, T5Config, T5EncoderModel
 
 from library import flux_models
-
-from library.utils import setup_logging, MemoryEfficientSafeOpen
+from library.utils import MemoryEfficientSafeOpen, setup_logging
 
 setup_logging()
 import logging
@@ -30,7 +29,7 @@ def load_safetensors(
     if disable_mmap:
         # return safetensors.torch.load(open(path, "rb").read())
         # use experimental loader
-        logger.info(f"Loading without mmap (experimental)")
+        logger.info("Loading without mmap (experimental)")
         state_dict = {}
         with MemoryEfficientSafeOpen(path) as f:
             for key in f.keys():
@@ -45,7 +44,7 @@ def load_safetensors(
 
 def check_flux_state_dict_diffusers_schnell(ckpt_path: str) -> Tuple[bool, bool, List[str]]:
     # check the state dict: Diffusers or BFL, dev or schnell
-    logger.info(f"Checking the state dict: Diffusers or BFL, dev or schnell")
+    logger.info("Checking the state dict: Diffusers or BFL, dev or schnell")
 
     if os.path.isdir(ckpt_path):  # if ckpt_path is a directory, it is Diffusers
         ckpt_path = os.path.join(ckpt_path, "transformer", "diffusion_pytorch_model-00001-of-00003.safetensors")

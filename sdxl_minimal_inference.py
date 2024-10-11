@@ -6,25 +6,23 @@ import datetime
 import math
 import os
 import random
-from einops import repeat
-import numpy as np
 
+import numpy as np
 import torch
-from library.device_utils import init_ipex, get_preferred_device
+from einops import repeat
+from library.device_utils import get_preferred_device, init_ipex
 
 init_ipex()
 
-from tqdm import tqdm
-from transformers import CLIPTokenizer
+import networks.lora as lora
 from diffusers import EulerDiscreteScheduler
+from library import sdxl_model_util
+from library.utils import setup_logging
 from PIL import Image
 
 # import open_clip
-from safetensors.torch import load_file
-
-from library import model_util, sdxl_model_util
-import networks.lora as lora
-from library.utils import setup_logging
+from tqdm import tqdm
+from transformers import CLIPTokenizer
 
 setup_logging()
 import logging

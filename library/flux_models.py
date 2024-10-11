@@ -2,14 +2,12 @@
 # license: Apache-2.0 License
 
 
-from concurrent.futures import Future, ThreadPoolExecutor
-from dataclasses import dataclass
 import math
-import os
-import time
-from typing import Dict, List, Optional
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from typing import Optional
 
-from library.device_utils import init_ipex, clean_memory_on_device
+from library.device_utils import clean_memory_on_device, init_ipex
 
 init_ipex()
 

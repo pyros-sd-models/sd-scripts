@@ -1,9 +1,12 @@
-import json
 import argparse
-from safetensors import safe_open
+import json
+
 from library.utils import setup_logging
+from safetensors import safe_open
+
 setup_logging()
 import logging
+
 logger = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser()

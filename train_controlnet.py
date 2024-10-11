@@ -1,42 +1,37 @@
 import argparse
-import json
 import math
 import os
 import random
-import time
 from multiprocessing import Value
 
 # from omegaconf import OmegaConf
 import toml
-
-from tqdm import tqdm
-
 import torch
 from library import deepspeed_utils
-from library.device_utils import init_ipex, clean_memory_on_device
+from library.device_utils import clean_memory_on_device, init_ipex
+from tqdm import tqdm
 
 init_ipex()
 
-from torch.nn.parallel import DistributedDataParallel as DDP
-from accelerate.utils import set_seed
-from diffusers import DDPMScheduler, ControlNetModel
-from safetensors.torch import load_file
-
+import library.config_util as config_util
+import library.custom_train_functions as custom_train_functions
+import library.huggingface_util as huggingface_util
 import library.model_util as model_util
 import library.train_util as train_util
-import library.config_util as config_util
+from accelerate.utils import set_seed
+from diffusers import ControlNetModel, DDPMScheduler
 from library.config_util import (
-    ConfigSanitizer,
     BlueprintGenerator,
+    ConfigSanitizer,
 )
-import library.huggingface_util as huggingface_util
-import library.custom_train_functions as custom_train_functions
 from library.custom_train_functions import (
+    apply_noise_offset,
     apply_snr_weight,
     pyramid_noise_like,
-    apply_noise_offset,
 )
-from library.utils import setup_logging, add_logging_arguments
+from library.utils import add_logging_arguments, setup_logging
+from safetensors.torch import load_file
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 setup_logging()
 import logging

@@ -1,16 +1,15 @@
 # OFT network module
 
-import math
 import os
-from typing import Dict, List, Optional, Tuple, Type, Union
-from diffusers import AutoencoderKL
+import re
+from typing import List, Optional, Type, Union
+
 import einops
-from transformers import CLIPTextModel
-import numpy as np
 import torch
 import torch.nn.functional as F
-import re
+from diffusers import AutoencoderKL
 from library.utils import setup_logging
+from transformers import CLIPTextModel
 
 setup_logging()
 import logging
@@ -199,7 +198,7 @@ def create_network(
 def create_network_from_weights(multiplier, file, vae, text_encoder, unet, weights_sd=None, for_inference=False, **kwargs):
     if weights_sd is None:
         if os.path.splitext(file)[1] == ".safetensors":
-            from safetensors.torch import load_file, safe_open
+            from safetensors.torch import load_file
 
             weights_sd = load_file(file)
         else:
@@ -355,7 +354,7 @@ class OFTNetwork(torch.nn.Module):
             oft.load_state_dict(sd_for_lora, False)
             oft.merge_to()
 
-        logger.info(f"weights are merged")
+        logger.info("weights are merged")
 
     # 二つのText Encoderに別々の学習率を設定できるようにするといいかも
     def prepare_optimizer_params(self, text_encoder_lr, unet_lr, default_lr):
@@ -407,8 +406,8 @@ class OFTNetwork(torch.nn.Module):
                 state_dict[key] = v
 
         if os.path.splitext(file)[1] == ".safetensors":
-            from safetensors.torch import save_file
             from library import train_util
+            from safetensors.torch import save_file
 
             # Precalculate model hashes to save time on indexing
             if metadata is None:

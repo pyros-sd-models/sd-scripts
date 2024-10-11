@@ -1,43 +1,36 @@
-import importlib
 import argparse
 import math
 import os
-import toml
 from multiprocessing import Value
 
-from tqdm import tqdm
-
+import toml
 import torch
 from library import deepspeed_utils
-from library.device_utils import init_ipex, clean_memory_on_device
+from library.device_utils import clean_memory_on_device, init_ipex
+from tqdm import tqdm
 
 init_ipex()
 
-from accelerate.utils import set_seed
-import diffusers
-from diffusers import DDPMScheduler
-import library
-
-import library.train_util as train_util
-import library.huggingface_util as huggingface_util
 import library.config_util as config_util
-from library.config_util import (
-    ConfigSanitizer,
-    BlueprintGenerator,
-)
 import library.custom_train_functions as custom_train_functions
+import library.huggingface_util as huggingface_util
+import library.original_unet as original_unet
+import library.train_util as train_util
+from accelerate.utils import set_seed
+from diffusers import DDPMScheduler
+from library.config_util import (
+    BlueprintGenerator,
+    ConfigSanitizer,
+)
 from library.custom_train_functions import (
-    apply_snr_weight,
-    prepare_scheduler_for_custom_training,
-    pyramid_noise_like,
-    apply_noise_offset,
-    scale_v_prediction_loss_like_noise_prediction,
     apply_debiased_estimation,
     apply_masked_loss,
+    apply_snr_weight,
+    prepare_scheduler_for_custom_training,
+    scale_v_prediction_loss_like_noise_prediction,
 )
-import library.original_unet as original_unet
-from XTI_hijack import unet_forward_XTI, downblock_forward_XTI, upblock_forward_XTI
-from library.utils import setup_logging, add_logging_arguments
+from library.utils import add_logging_arguments, setup_logging
+from XTI_hijack import downblock_forward_XTI, unet_forward_XTI, upblock_forward_XTI
 
 setup_logging()
 import logging
@@ -150,7 +143,7 @@ def train(args):
 
     token_ids = tokenizer.convert_tokens_to_ids(token_strings)
     logger.info(f"tokens are added: {token_ids}")
-    assert min(token_ids) == token_ids[0] and token_ids[-1] == token_ids[0] + len(token_ids) - 1, f"token ids is not ordered"
+    assert min(token_ids) == token_ids[0] and token_ids[-1] == token_ids[0] + len(token_ids) - 1, "token ids is not ordered"
     assert len(tokenizer) - 1 == token_ids[-1], f"token ids is not end of tokenize: {len(tokenizer)}"
 
     token_strings_XTI = []
@@ -198,7 +191,7 @@ def train(args):
         for token_id, embedding in zip(token_ids_XTI, embeddings):
             token_embeds[token_id] = embedding
             # logger.info(token_id, token_embeds[token_id].mean(), token_embeds[token_id].min())
-        logger.info(f"weighs loaded")
+        logger.info("weighs loaded")
 
     logger.info(f"create embeddings for {args.num_vectors_per_token} tokens, for {args.token_string}")
 

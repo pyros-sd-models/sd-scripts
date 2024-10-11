@@ -3,7 +3,8 @@
 
 import os
 import re
-from typing import Optional, List, Type
+from typing import List, Optional
+
 import torch
 from library import sdxl_original_unet
 from library.utils import setup_logging

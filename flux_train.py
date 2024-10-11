@@ -11,29 +11,30 @@
 # - Per-block fused optimizer instances
 
 import argparse
-from concurrent.futures import ThreadPoolExecutor
 import copy
 import math
 import os
+from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Value
-import time
-from typing import List
+
 import toml
-
-from tqdm import tqdm
-
 import torch
-from library.device_utils import init_ipex, clean_memory_on_device
+from library.device_utils import clean_memory_on_device, init_ipex
+from tqdm import tqdm
 
 init_ipex()
 
-from accelerate.utils import set_seed
-from library import deepspeed_utils, flux_train_utils, flux_utils, strategy_base, strategy_flux
-from library.sd3_train_utils import load_prompts, FlowMatchEulerDiscreteScheduler
-
 import library.train_util as train_util
-
-from library.utils import setup_logging, add_logging_arguments
+from accelerate.utils import set_seed
+from library import (
+    deepspeed_utils,
+    flux_train_utils,
+    flux_utils,
+    strategy_base,
+    strategy_flux,
+)
+from library.sd3_train_utils import FlowMatchEulerDiscreteScheduler, load_prompts
+from library.utils import add_logging_arguments, setup_logging
 
 setup_logging()
 import logging
@@ -44,10 +45,10 @@ import library.config_util as config_util
 
 # import library.sdxl_train_util as sdxl_train_util
 from library.config_util import (
-    ConfigSanitizer,
     BlueprintGenerator,
+    ConfigSanitizer,
 )
-from library.custom_train_functions import apply_masked_loss, add_custom_train_arguments
+from library.custom_train_functions import add_custom_train_arguments, apply_masked_loss
 
 
 def train(args):

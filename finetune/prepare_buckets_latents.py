@@ -1,24 +1,21 @@
 import argparse
-import os
 import json
-
+import os
 from pathlib import Path
 from typing import List
-from tqdm import tqdm
-import numpy as np
-from PIL import Image
-import cv2
 
+import numpy as np
 import torch
-from library.device_utils import init_ipex, get_preferred_device
+from library.device_utils import get_preferred_device, init_ipex
+from PIL import Image
+from tqdm import tqdm
 
 init_ipex()
-
-from torchvision import transforms
 
 import library.model_util as model_util
 import library.train_util as train_util
 from library.utils import setup_logging
+from torchvision import transforms
 
 setup_logging()
 import logging
@@ -62,10 +59,10 @@ def get_npz_filename(data_dir, image_key, is_full_path, recursive):
 def main(args):
     # assert args.bucket_reso_steps % 8 == 0, f"bucket_reso_steps must be divisible by 8 / bucket_reso_stepは8で割り切れる必要があります"
     if args.bucket_reso_steps % 8 > 0:
-        logger.warning(f"resolution of buckets in training time is a multiple of 8 / 学習時の各bucketの解像度は8単位になります")
+        logger.warning("resolution of buckets in training time is a multiple of 8 / 学習時の各bucketの解像度は8単位になります")
     if args.bucket_reso_steps % 32 > 0:
         logger.warning(
-            f"WARNING: bucket_reso_steps is not divisible by 32. It is not working with SDXL / bucket_reso_stepsが32で割り切れません。SDXLでは動作しません"
+            "WARNING: bucket_reso_steps is not divisible by 32. It is not working with SDXL / bucket_reso_stepsが32で割り切れません。SDXLでは動作しません"
         )
 
     train_data_dir_path = Path(args.train_data_dir)

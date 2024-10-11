@@ -1,11 +1,12 @@
 import argparse
 import json
+import os
 from pathlib import Path
 from typing import List
-from tqdm import tqdm
+
 import library.train_util as train_util
-import os
 from library.utils import setup_logging
+from tqdm import tqdm
 
 setup_logging()
 import logging

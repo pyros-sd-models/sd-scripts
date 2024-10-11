@@ -5,12 +5,10 @@ from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
-from transformers import CLIPTokenizer, CLIPTextModel, CLIPTextModelWithProjection
-
+from transformers import CLIPTokenizer
 
 # TODO remove circular import by moving ImageInfo to a separate file
 # from library.train_util import ImageInfo
-
 from library.utils import setup_logging
 
 setup_logging()

@@ -24,13 +24,18 @@
 import argparse
 import os
 from pathlib import Path
-import safetensors
-from safetensors.torch import safe_open
-import torch
-from tqdm import tqdm
 
+import safetensors
+import torch
 from library import flux_utils
-from library.utils import setup_logging, str_to_dtype, MemoryEfficientSafeOpen, mem_eff_save_file
+from library.utils import (
+    MemoryEfficientSafeOpen,
+    mem_eff_save_file,
+    setup_logging,
+    str_to_dtype,
+)
+from safetensors.torch import safe_open
+from tqdm import tqdm
 
 setup_logging()
 import logging

@@ -4,15 +4,19 @@ import os
 from typing import Optional
 
 import torch
-from library.device_utils import init_ipex, clean_memory_on_device
+
+from library.device_utils import clean_memory_on_device, init_ipex
 
 init_ipex()
 
 from accelerate import init_empty_weights
-from tqdm import tqdm
 from transformers import CLIPTokenizer
-from library import model_util, sdxl_model_util, train_util, sdxl_original_unet
-from library.sdxl_lpw_stable_diffusion import SdxlStableDiffusionLongPromptWeightingPipeline
+
+from library import model_util, sdxl_model_util, sdxl_original_unet, train_util
+from library.sdxl_lpw_stable_diffusion import (
+    SdxlStableDiffusionLongPromptWeightingPipeline,
+)
+
 from .utils import setup_logging
 
 setup_logging()
